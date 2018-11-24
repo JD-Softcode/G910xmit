@@ -87,7 +87,7 @@ G910playerOutOfControlEvent = false		--  used as back-up method to prevent short
 G910playerInCombat = false				--  used for health pulse rate sending (2.0) and to confirm ok to echo out of combat
 G910loadingScreenActive = true			--  used to temporarily suspend sending messages when WoW zone loading screen is showing
 G910cooldownUpdateTimer = 0.0			--	heartbeat for the cooldowns
-G910updateCooldownsRate = 1.0			--  many seconds between cooldown updates  
+G910updateCooldownsInterval = 1.0		--  many seconds between cooldown updates  
 G910healthUpdateTimer = 0.0				--  heartbeat for the combat health updates
 G910XmitMinTransmitDelay = 0.20			--  delay between each transmit phase (sec) / based on saved variable
 G910cooldownZone1 = { 1, 2, 3, 4, 5, 6} --  which action slots are in what messaging zone (zones 1 & 2 get offset for stances/stealth)
@@ -407,7 +407,7 @@ function G910xmit_OnEvent(frame, event, ...)
         end
     elseif event == "ACTIONBAR_UPDATE_COOLDOWN" then    -- added in 1.15; this really doesn't fire like the API description says
 		G910updateTheCooldowns()
-		G910cooldownUpdateTimer = GetTime() + G910updateCooldownsRate 
+		G910cooldownUpdateTimer = GetTime() + G910updateCooldownsInterval 
     elseif event == "CHAT_MSG_WHISPER" then         -- Got a whisper
         if not G910whisperLight then
             G910SendMessage("I")
@@ -451,7 +451,7 @@ end
 function G910xmit_OnUpdate(frame, elapsed)
 	--If we're blocked by a loading screen, do nothing.
 	if (G910loadingScreenActive == true) then
-		return								-- may prevent losing alive/dead messages zoning in/out of instances
+		return								-- should reduce losing alive/dead messages zoning in/out of instances
 	end
 	-- If in calibration mode, update the clock and leave.
 	if G910calCountdown > 0 then
@@ -503,7 +503,7 @@ function G910xmit_OnUpdate(frame, elapsed)
 	local now = GetTime()
 	if now > G910cooldownUpdateTimer then
 		G910updateTheCooldowns()
-		G910cooldownUpdateTimer = now + G910updateCooldownsRate 	-- update cooldowns every 1/2 second
+		G910cooldownUpdateTimer = now + G910updateCooldownsInterval 	-- update cooldowns periodically
 	end
 	-- Periodically update the health % of the player if in combat
 	if (G910playerInCombat == true) and (now > G910healthUpdateTimer) then
@@ -646,6 +646,64 @@ function G910updateTheCooldowns()
 			end
 		end
 	end
+end
+
+
+--			whatToDo = whatToDo + RemoveAndAddNothing
+--		end
+--		if (existingSecondBit == newSecondBit) then
+--			whatToDo = whatToDo + AllowAndAddNothing
+--		else
+--			whatToDo = whatToDo + RemoveAndAddNothing
+--		end
+--		if (existingThirdBit == newThirdBit) then
+--			whatToDo = whatToDo + AllowAndAddNothing
+--		else
+--			whatToDo = whatToDo + RemoveAndAddNothing
+--		end
+--		if (existingFourthBit == newFourthBit) then
+--			whatToDo = whatToDo + AllowAndAddNothing
+--		else
+--			whatToDo = whatToDo + RemoveAndAddNothing
+--		end
+--		if (existingFifthBit == newFifthBit) then
+--			whatToDo = whatToDo + AllowAndAddNothing
+--		else
+--			whatToDo = whatToDo + RemoveAndAddNothing
+--		end
+--		if (existingSixthBit == newSixthBit) then
+--			whatToDo = whatToDo + AllowAndAddNothing
+--		else
+--			whatToDo = whatToDo + RemoveAndAddNothing
+--		end
+--		
+--		if whatToDo == AllAreAllowAndAddNothing then
+--			--do nothing; skip adding the new message
+--			print(">>> skipped adding a new "..zonePrefix.." message")
+--		elseif whatToDo == AllAreRemoveAndAddNothing then
+--			local oldMsg = G910pendingMessage.sub(G910pendingMessage,foundAt,foundAt+2)
+--			G910pendingMessage = string.gsub(G910pendingMessage, oldMsg, "")	-- replace oldMsg with nothing
+--			print(">>> purged existing message of type "..zonePrefix.." from the queue")
+--		else
+--			G910pendingMessage = string.sub(G910pendingMessage, 1, foundAt-1) .. newMsg .. string.sub(G910pendingMessage, foundAt+3, -1)  -- replace existing msg with new value
+--			print(">>> replaced existing message of type "..zonePrefix.." in queue")
+--		end
+
+		if newByte == existingByte then	--if all the bits are the same, i.e. wanting add the identical message
+			--do nothing; skip adding the new message
+			print(">>> skipped adding a duplicate "..zonePrefix.." message")
+		elseif bit.bxor(newByte, existingByte) == 0x7E then  -- 0x7E=0b01111110; if all meaningful bits are reversed
+			--local oldMsg = G910pendingMessage.sub(G910pendingMessage,foundAt,foundAt+2)
+			local oldMsg = zonePrefix .. string.char(existingByte)
+			G910pendingMessage = string.gsub(G910pendingMessage, oldMsg, "")	-- replace oldMsg with nothing / purge it
+			print(">>> purged existing message of type "..zonePrefix.." from the queue")
+		else							-- if only some bits are different
+			G910pendingMessage = string.sub(G910pendingMessage, 1, foundAt-1) .. newMsg .. string.sub(G910pendingMessage, foundAt+3, -1)  -- replace existing msg with new value
+			print(">>> replaced existing message of type "..zonePrefix.." in queue")
+		end
+	else
+		G910SendMessage(newMsg)
+	end	
 end
 
 
