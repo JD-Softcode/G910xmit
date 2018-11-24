@@ -630,25 +630,66 @@ function G910updateTheCooldowns()
 		if ( shouldTheCooldownsBeSuspended() == false ) then							-- ignore cooldowns while on a taxi, out of control, or dead
 			local offset = determineBarOffset()
 			if scanCooldownFlagsTrueIfChanged(G910cooldownZone1, offset) then
-				G910SendMessage("!R" .. buildCooldownChar(G910cooldownZone1))
+				sendMessageFixingAnyOverlaps(G910cooldownZone1, "!R")
 			end
 			if scanCooldownFlagsTrueIfChanged(G910cooldownZone2, offset) then
-				G910SendMessage("!B" .. buildCooldownChar(G910cooldownZone2))
+				--G910SendMessage("!B" .. buildCooldownChar(G910cooldownZone2))
+				sendMessageFixingAnyOverlaps(G910cooldownZone2, "!B")
 			end
 			if scanCooldownFlagsTrueIfChanged(G910cooldownZone3, 0) then
-				G910SendMessage("!G" .. buildCooldownChar(G910cooldownZone3))
+				--G910SendMessage("!G" .. buildCooldownChar(G910cooldownZone3))
+				sendMessageFixingAnyOverlaps(G910cooldownZone3, "!G")
 			end
 			if scanCooldownFlagsTrueIfChanged(G910cooldownZone4, 0) then
-				G910SendMessage("!M" .. buildCooldownChar(G910cooldownZone4))
+				--G910SendMessage("!M" .. buildCooldownChar(G910cooldownZone4))
+				sendMessageFixingAnyOverlaps(G910cooldownZone4, "!M")
 			end
 			if scanCooldownFlagsTrueIfChanged(G910cooldownZone5, 0) then
-				G910SendMessage("!C" .. buildCooldownChar(G910cooldownZone5))
+				--G910SendMessage("!C" .. buildCooldownChar(G910cooldownZone5))
+				sendMessageFixingAnyOverlaps(G910cooldownZone5, "!C")
 			end
 		end
 	end
 end
 
 
+function sendMessageFixingAnyOverlaps(cooldownZone, zonePrefix)
+	local newMsg = zonePrefix .. buildCooldownChar(cooldownZone)
+	local foundAt
+	foundAt = string.find(G910pendingMessage, zonePrefix)  --does the existing message queue contain a related message?
+	if foundAt ~= nil then
+	
+		local existingByte = string.byte(G910pendingMessage, foundAt+2)
+--		existingFirstBit  = bit.rshift(         existingByte       , 6)
+--		existingSecondBit = bit.rshift(bit.band(existingByte, 0x20), 5)
+--		existingThirdBit  = bit.rshift(bit.band(existingByte, 0x10), 4)
+--		existingFourthBit = bit.rshift(bit.band(existingByte, 0x08), 3)
+--		existingFifthBit  = bit.rshift(bit.band(existingByte, 0x04), 2)
+--		existingSixthBit  = bit.rshift(bit.band(existingByte, 0x02), 1)
+		
+		local newByte = string.byte(newMsg, 3)
+--		newFirstBit  = bit.rshift(         newByte       , 6)
+--		newSecondBit = bit.rshift(bit.band(newByte, 0x20), 5)
+--		newThirdBit  = bit.rshift(bit.band(newByte, 0x10), 4)
+--		newFourthBit = bit.rshift(bit.band(newByte, 0x08), 3)
+--		newFifthBit  = bit.rshift(bit.band(newByte, 0x04), 2)
+--		newSixthBit  = bit.rshift(bit.band(newByte, 0x02), 1)
+
+		--for bit = 1,6 do						-- 1,   2, 3,  4, 5, 6
+		--	local testBit = 2^(7-bit)			-- 64, 32, 16, 8, 4, 2
+		--	if bit.band(existingByte, testBit) then
+		--		foundBit1 = bit.rshift(bit.band(existingByte, 0x40), 6)
+		--end
+		
+--		local AllowAndAddNothing = 1
+--		local RemoveAndAddNothing = 7
+--		local AllAreAllowAndAddNothing  = 6 * AllowAndAddNothing
+--		local AllAreRemoveAndAddNothing = 6 * RemoveAndAddNothing
+--		
+--		local whatToDo = 0
+--		if (existingFirstBit == newFirstBit) then
+--			whatToDo = whatToDo + AllowAndAddNothing
+--		else
 --			whatToDo = whatToDo + RemoveAndAddNothing
 --		end
 --		if (existingSecondBit == newSecondBit) then

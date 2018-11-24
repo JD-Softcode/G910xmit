@@ -1,6 +1,6 @@
 ## Interface: 80000
-## Title: G910xmit v2.1.1
-## Version: 2.1.1
+## Title: G910xmit v2.2 DEV
+## Version: 2.2 DEV
 ## Notes: Pairs with the WoW G910 application for Mac and PC to synchronize Logitech LED keyboard lights with in-game events.
 ## SavedVariables: G910SuppressCooldowns, G910UserTimeFactor
 ## Author: waldokind@jdsoftcode.net
