@@ -657,14 +657,14 @@ function sendMessageFixingAnyOverlaps(cooldownZone, zonePrefix)		-- v2.2 add: ma
 		local newByte = string.byte(newMsg, 3)
 		if newByte == existingByte then								--if all the bits are the same, i.e. wanting add the identical message
 			--do nothing; skip adding the new message
-			print(">>> skipped adding a duplicate "..zonePrefix.." message")
+			--print(">>> skipped adding a duplicate "..zonePrefix.." message")
 		elseif bit.bxor(newByte, existingByte) == 0x7E then  		-- if all 6 meaningful bits are reversed; 0x7E=0b01111110
 			local oldMsg = zonePrefix .. string.char(existingByte)
 			G910pendingMessage = string.gsub(G910pendingMessage, oldMsg, "")	-- replace oldMsg with nothing / purge it
-			print(">>> purged existing message of type "..zonePrefix.." from the queue")
+			--print(">>> purged existing message of type "..zonePrefix.." from the queue")
 		else														-- if 1 to 5 of the bits are different
 			G910pendingMessage = string.sub(G910pendingMessage, 1, foundAt-1) .. newMsg .. string.sub(G910pendingMessage, foundAt+3, -1)  -- replace existing msg with new value
-			print(">>> replaced existing message of type "..zonePrefix.." in queue")
+			--print(">>> replaced existing message of type "..zonePrefix.." in queue")
 		end
 	else
 		G910SendMessage(newMsg)
