@@ -1,4 +1,4 @@
-﻿--   ## WoW G910 XMIT - ©2016-18 J∆•Softcode (www.jdsoftcode.net) ##
+﻿--   ## WoW G910 XMIT - ©2016-19 J∆•Softcode (www.jdsoftcode.net) ##
 
 -------------------------- DEFINE USER SLASH COMMANDS ------------------------
 
@@ -16,6 +16,7 @@ SLASH_G910ACTIONBARS1  = "/G910actionbars"	-- user preference to suppress action
 SLASH_G910HELP91  	   = "/G910"			-- in-game help
 SLASH_G910HELP92  	   = "/G910help"		-- in-game help
 SLASH_G910TIME1		   = "/G910time"		-- sets transmit delay counter
+SLASH_G910PROFILE1     = "/G910profile"		-- new expanded light profile command, follow with #, 1-9
 
 SLASH_G910CAL3         = "/G810cal"			-- these vanity aliases added in 1.15
 SLASH_G910RESET3       = "/G810r"
@@ -27,6 +28,7 @@ SLASH_G910ACTIONBARS2  = "/G810actionbars"
 SLASH_G910HELP81  	   = "/G810"		
 SLASH_G910HELP82  	   = "/G810help"	
 SLASH_G910TIME2		   = "/G810time"
+SLASH_G910PROFILE2     = "/G810profile"
 
 SLASH_G910CAL4         = "/G410cal"
 SLASH_G910RESET4       = "/G410r"
@@ -38,6 +40,7 @@ SLASH_G910ACTIONBARS3  = "/G410actionbars"
 SLASH_G910HELP41  	   = "/G410"		
 SLASH_G910HELP42  	   = "/G410help"	
 SLASH_G910TIME3		   = "/G410time"
+SLASH_G910PROFILE3     = "/G410profile"
 
 SLASH_G910CAL5         = "/GProcal"
 SLASH_G910RESET5       = "/GPror"
@@ -49,6 +52,7 @@ SLASH_G910ACTIONBARS4  = "/GProactionbars"
 SLASH_G910HELPP1  	   = "/GPro"		
 SLASH_G910HELPP2  	   = "/GProhelp"	
 SLASH_G910TIME4		   = "/GProtime"
+SLASH_G910PROFILE4     = "/GProprofile"
 
 SLASH_G910CAL6         = "/G513cal"
 SLASH_G910RESET6       = "/G513r"
@@ -60,6 +64,7 @@ SLASH_G910ACTIONBARS5  = "/G513actionbars"
 SLASH_G910HELP51  	   = "/G513"		
 SLASH_G910HELP52  	   = "/G513help"	
 SLASH_G910TIME5		   = "/G513time"
+SLASH_G910PROFILE5     = "/G513profile"
 
 SLASH_G910CAL7         = "/G512cal"
 SLASH_G910RESET7       = "/G512r"
@@ -71,6 +76,7 @@ SLASH_G910ACTIONBARS6  = "/G512actionbars"
 SLASH_G910HELP551  	   = "/G512"		
 SLASH_G910HELP552  	   = "/G512help"	
 SLASH_G910TIME6		   = "/G512time"
+SLASH_G910PROFILE6     = "/G512profile"
 
 -------------------------- ADD-ON GLOBALS ------------------------
 
@@ -146,16 +152,25 @@ SlashCmdList["G910CDRESET"] = function(msg, theEditFrame)		--  /G910cdreset    S
 	end
 end
 
-SlashCmdList["G910PROFILE1"] = function(msg, theEditFrame)		--  /G910profile1    Activate lighting profile
-	G910SendMessage("P")
+SlashCmdList["G910PROFILE1"] = function(msg, theEditFrame)		--  LEGACY /G910profile1    Activate lighting profile
+	G910SendMessage("1")
 end
 
-SlashCmdList["G910PROFILE2"] = function(msg, theEditFrame)		--  /G910profile2    Activate lighting profile
-	G910SendMessage("Q")
+SlashCmdList["G910PROFILE2"] = function(msg, theEditFrame)		--  LEGACY /G910profile2    Activate lighting profile
+	G910SendMessage("2")
 end
 
-SlashCmdList["G910PROFILESWAP"] = function(msg, theEditFrame)		--  /G910profileswap    Activate lighting profile
+SlashCmdList["G910PROFILESWAP"] = function(msg, theEditFrame)	--  LEGACY /G910profileswap    Activate lighting profile
 	G910SendMessage("p")
+end
+
+SlashCmdList["G910PROFILE"] = function(msg, theEditFrame)		--  /G910profile X     Switch to lighting profile X
+	local profileNum = math.floor(tonumber(msg))
+	if profileNum and (profileNum > 0 and profileNum < 10) then		-- is a number, and in the valid range
+		G910SendMessage(tostring(profileNum))
+	else
+		ChatFrame1:AddMessage( "G910xmit: Type \"/G910profile x\" where x is a number between 1 and 9.")
+	end
 end
 
 SlashCmdList["G910TRIGGER"] = function(msg, theEditFrame)		-- send arbitrary command for testing
@@ -207,8 +222,9 @@ function G910showHelp(name)											-- added in 1.15
 	ChatFrame1:AddMessage ("|cffffff00HELP for WoW G"..name.." and G910xmit.|cff00ff66 Find more at |rwww.jdsoftcode.net/warcraft")
 	ChatFrame1:AddMessage ("|cff00ff66  Type /g"..name.."r to reset stuck animations.")
 	ChatFrame1:AddMessage ("|cff00ff66  Type /g"..name.."cdr to reset and resync the cooldown lights.")
+	ChatFrame1:AddMessage ("|cff00ff66  Type /g"..name.."profile # to change lighting colors.")
 	ChatFrame1:AddMessage ("|cff00ff66  Type /g"..name.."time to adjust messaging rate.")
-	ChatFrame1:AddMessage ("|cff00ff66  See main application help on using lighting profiles, suspending cooldown updates, and calibrating for first use.|r")
+	ChatFrame1:AddMessage ("|cff00ff66  See main application help on lighting profiles, suspending cooldown updates, and setup calibration.|r")
 end
 
 SlashCmdList["G910TIME"] = function(msg, theEditFrame)				-- change transmit rate
