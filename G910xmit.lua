@@ -285,6 +285,19 @@ function G910xmit_OnLoad(frame)
 	frame:RegisterEvent("ARTIFACT_CLOSE")
 	frame:RegisterEvent("AZERITE_ITEM_EXPERIENCE_CHANGED")		--new for WoW 8.0; add in AddOn 2.0
 	frame:RegisterEvent("AZERITE_ITEM_POWER_LEVEL_CHANGED")		--new for WoW 8.0; add in AddOn 2.0
+	
+	
+	
+	frame:RegisterEvent("AZERITE_ESSENCE_ACTIVATED")			--new for WoW 8.2
+	frame:RegisterEvent("AZERITE_ESSENCE_ACTIVATION_FAILED")	--new for WoW 8.2
+	frame:RegisterEvent("AZERITE_ESSENCE_CHANGED")				--new for WoW 8.2
+	frame:RegisterEvent("AZERITE_ESSENCE_FORGE_CLOSE")			--new for WoW 8.2
+	frame:RegisterEvent("AZERITE_ESSENCE_FORGE_OPEN")			--new for WoW 8.2
+	frame:RegisterEvent("AZERITE_ESSENCE_MILESTONE_UNLOCKED")	--new for WoW 8.2
+	frame:RegisterEvent("AZERITE_ESSENCE_UPDATE")				--new for WoW 8.2
+	frame:RegisterEvent("PENDING_AZERITE_ESSENCE_CHANGED")		--new for WoW 8.2
+	
+	
 		
 	frame:RegisterEvent("LOADING_SCREEN_ENABLED")		--add in AddOn 2.0
 	frame:RegisterEvent("LOADING_SCREEN_DISABLED")		--add in AddOn 2.0
@@ -323,6 +336,26 @@ function G910xmit_OnEvent(frame, event, ...)
         G910XmitMinTransmitDelay = G910UserTimeFactor/100	--  delay between each transmit phase (sec)        
         G910loadingScreenActive = false
         -- Initial cooldown setup handled by initial talent event sent my game
+        
+    elseif event == "AZERITE_ESSENCE_ACTIVATED" then
+    	print("AZERITE_ESSENCE_ACTIVATED")
+    elseif event == "AZERITE_ESSENCE_ACTIVATION_FAILED" then
+    	print("AZERITE_ESSENCE_ACTIVATION_FAILED")
+    elseif event == "AZERITE_ESSENCE_CHANGED" then
+    	print("AZERITE_ESSENCE_CHANGED")
+    elseif event == "AZERITE_ESSENCE_FORGE_CLOSE" then
+    	print("AZERITE_ESSENCE_FORGE_CLOSE")
+    elseif event == "AZERITE_ESSENCE_FORGE_OPEN" then
+    	print("AZERITE_ESSENCE_FORGE_OPEN")
+    elseif event == "AZERITE_ESSENCE_MILESTONE_UNLOCKED" then
+    	print("AZERITE_ESSENCE_MILESTONE_UNLOCKED")
+    elseif event == "AZERITE_ESSENCE_UPDATE" then
+    	print("AZERITE_ESSENCE_UPDATE")
+    elseif event == "PENDING_AZERITE_ESSENCE_CHANGED" then
+    	print("PENDING_AZERITE_ESSENCE_CHANGED")
+        
+        
+        
     elseif event == "LOADING_SCREEN_ENABLED" then           -- new in 2.0 
     	G910suspendCooldownUpdate = true
         G910loadingScreenActive = true
