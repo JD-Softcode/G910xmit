@@ -465,7 +465,7 @@ function G910xmit_OnEvent(frame, event, ...)
     elseif event == "AZERITE_ITEM_POWER_LEVEL_CHANGED" then     -- when the necklace levels up
         G910SendMessage("n")
     elseif event == "AZERITE_ITEM_EXPERIENCE_CHANGED" then      -- every time the necklace XP bar moves
-        G910SendMessage("n")
+        G910SendMessage("N")
         
     elseif event == "AZERITE_ESSENCE_ACTIVATED" then	-- new ability dropped onto center of necklace
     	print("AZERITE_ESSENCE_ACTIVATED  arg1 = "..arg1)
