@@ -17,6 +17,7 @@ SLASH_G910HELP91  	   = "/G910"			-- in-game help
 SLASH_G910HELP92  	   = "/G910help"		-- in-game help
 SLASH_G910TIME1		   = "/G910time"		-- sets transmit delay counter
 SLASH_G910PROFILE1     = "/G910profile"		-- new expanded light profile command, follow with #, 1-9
+SLASH_G910REMEMBER1	   = "/G910rememberprofile" -- maps character name, realm, and spec to profile x; auto-restored
 
 SLASH_G910CAL3         = "/G810cal"			-- these vanity aliases added in 1.15
 SLASH_G910RESET3       = "/G810r"
@@ -29,6 +30,7 @@ SLASH_G910HELP81  	   = "/G810"
 SLASH_G910HELP82  	   = "/G810help"	
 SLASH_G910TIME2		   = "/G810time"
 SLASH_G910PROFILE2     = "/G810profile"
+SLASH_G910REMEMBER2	   = "/G810rememberprofile"
 
 SLASH_G910CAL4         = "/G410cal"
 SLASH_G910RESET4       = "/G410r"
@@ -41,6 +43,7 @@ SLASH_G910HELP41  	   = "/G410"
 SLASH_G910HELP42  	   = "/G410help"	
 SLASH_G910TIME3		   = "/G410time"
 SLASH_G910PROFILE3     = "/G410profile"
+SLASH_G910REMEMBER3	   = "/G410rememberprofile"
 
 SLASH_G910CAL5         = "/GProcal"
 SLASH_G910RESET5       = "/GPror"
@@ -53,6 +56,7 @@ SLASH_G910HELPP1  	   = "/GPro"
 SLASH_G910HELPP2  	   = "/GProhelp"	
 SLASH_G910TIME4		   = "/GProtime"
 SLASH_G910PROFILE4     = "/GProprofile"
+SLASH_G910REMEMBER4	   = "/GProrememberprofile"
 
 SLASH_G910CAL6         = "/G513cal"
 SLASH_G910RESET6       = "/G513r"
@@ -65,6 +69,7 @@ SLASH_G910HELP51  	   = "/G513"
 SLASH_G910HELP52  	   = "/G513help"	
 SLASH_G910TIME5		   = "/G513time"
 SLASH_G910PROFILE5     = "/G513profile"
+SLASH_G910REMEMBER5	   = "/G513rememberprofile"
 
 SLASH_G910CAL7         = "/G512cal"
 SLASH_G910RESET7       = "/G512r"
@@ -77,6 +82,8 @@ SLASH_G910HELP551  	   = "/G512"
 SLASH_G910HELP552  	   = "/G512help"	
 SLASH_G910TIME6		   = "/G512time"
 SLASH_G910PROFILE6     = "/G512profile"
+SLASH_G910REMEMBER6	   = "/G512rememberprofile"
+
 
 -------------------------- ADD-ON GLOBALS ------------------------
 
@@ -105,8 +112,9 @@ G910cooldownMark = {}					-- know what's been flagged as on cooldown so won't se
 
 G910healthCodes = {"z", "y", "x", "w"}	--  used to send player health for combat light timing (2.0)
 
---G910SuppressCooldowns 				--  saved variable in the .toc (applies across all characters)
---G910UserTimeFactor = 15				--  saved variable in the .toc (applies across all characters)
+--G910SuppressCooldowns 				--  saved variable in the .toc (applies across all characters on the same realm)
+--G910UserTimeFactor = 15				--  saved variable in the .toc
+--G910ProfileMemory						--  saved variable in the .toc
 
 -------------------------- THE SLASH COMMANDS EXECUTE CODE HERE ------------------------
 
@@ -173,6 +181,24 @@ SlashCmdList["G910PROFILE"] = function(msg, theEditFrame)		--  /G910profile X   
 	end
 end
 
+SlashCmdList["G910REMEMBER"] = function(msg, theEditFrame)	--   /G910rememberprofile X    Always apply X when this char/spec logs in
+	local profileNum = math.floor(tonumber(msg))
+	if profileNum and (profileNum > 0 and profileNum < 10) then		-- is a number, and in the valid range
+		local playerName = GetUnitName("player", true)		-- get name & should have no realm (saved var is realm unique)
+		--if string.find(playerName, "-") then				-- if player NOT on same realm, then realm appears after dash
+		--	-- do nothing, we have the realm name included
+		--else
+		--	playerName = playerName.."-"..GetRealmName()  	-- append realm to local player name
+		--end
+		local specNow = GetSpecialization()
+		local nameAndSpec = playerName .. tostring(specNow)
+		G910ProfileMemory[nameAndSpec] =  profileNum
+		ChatFrame1:AddMessage( "G910xmit: Remembering to show profile "..profileNum.." for "..playerName.." in "..(select(2, GetSpecializationInfo(specNow)) or "No").." spec.")
+	else
+		ChatFrame1:AddMessage( "G910xmit: Type \"/G910rememberprofile x\" where x is a number between 1 and 9.")
+	end
+end
+
 SlashCmdList["G910TRIGGER"] = function(msg, theEditFrame)		-- send arbitrary command for testing
 	ChatFrame1:AddMessage( "G910xmit: Sending ‘"..msg.."’ to WoW G910.")
 	G910SendMessage(msg)
@@ -223,6 +249,7 @@ function G910showHelp(name)											-- added in 1.15
 	ChatFrame1:AddMessage ("|cff00ff66  Type /g"..name.."r to reset stuck animations.")
 	ChatFrame1:AddMessage ("|cff00ff66  Type /g"..name.."cdr to reset and resync the cooldown lights.")
 	ChatFrame1:AddMessage ("|cff00ff66  Type /g"..name.."profile # to change lighting colors.")
+	ChatFrame1:AddMessage ("|cff00ff66  Type /g"..name.."rememberprofile # to always switch to the profile for this character/spec.")
 	ChatFrame1:AddMessage ("|cff00ff66  Type /g"..name.."time to adjust messaging rate.")
 	ChatFrame1:AddMessage ("|cff00ff66  See main application help on lighting profiles, suspending cooldown updates, and setup calibration.|r")
 end
@@ -408,6 +435,7 @@ function G910xmit_OnEvent(frame, event, ...)
         if (arg2==0) then                           -- arg2 == 0 only upon initial character login to the game world
             G910suspendCooldownUpdate = true						-- pause automatic updating
             C_Timer.After(2.0, resetTheCooldowns)                   -- full, no-blink update after things settle down, else all show not ready
+            C_Timer.After(4.0, applyRememberedProfile)
             C_Timer.After(6.0, function() G910suspendCooldownUpdate = false end)
         else
             local specNow = GetSpecialization()
@@ -416,6 +444,7 @@ function G910xmit_OnEvent(frame, event, ...)
             	C_Timer.After(0.01, function() G910SendMessage("T") end)       -- play the animation. Calling directly often failed due to more C_Timers immediately after
                 G910suspendCooldownUpdate = true			-- pause automatic updating
                 C_Timer.After(2.1, resetTheCooldowns)       -- catch some early ones right after animation to show progress
+	            C_Timer.After(4.0, applyRememberedProfile)
                 C_Timer.After(8.0, resetTheCooldowns)       -- certain spells take a long time to show ready
                 C_Timer.After(10.1, function() G910suspendCooldownUpdate = false end)
     	        G910oldSpecialization = specNow
@@ -771,4 +800,17 @@ function determineBarOffset()
 		offset = 12*(barOffset+5)	-- looks at rogue stealth bars, shadow priest bars, warrior stances, and druid forms(?)
 	end
 	return offset
+end
+
+
+--------------------------  PROFILE MEMORY RESTORE ------------------------
+
+function applyRememberedProfile()
+	local playerName = GetUnitName("player", true)		
+	local specNow = GetSpecialization()
+	local nameAndSpec = playerName .. tostring(specNow)
+	local newProfile = G910ProfileMemory[nameAndSpec]
+	if newProfile and newProfile > 0 and newProfile < 10 then
+		G910SendMessage(tostring(newProfile))
+	end
 end
