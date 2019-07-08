@@ -314,6 +314,15 @@ function G910xmit_OnLoad(frame)
 	frame:RegisterEvent("ARTIFACT_CLOSE")
 	frame:RegisterEvent("AZERITE_ITEM_EXPERIENCE_CHANGED")		--new for WoW 8.0; add in AddOn 2.0
 	frame:RegisterEvent("AZERITE_ITEM_POWER_LEVEL_CHANGED")		--new for WoW 8.0; add in AddOn 2.0
+	
+	frame:RegisterEvent("AZERITE_ESSENCE_ACTIVATED")			--new for WoW 8.2
+	--frame:RegisterEvent("AZERITE_ESSENCE_ACTIVATION_FAILED")	--new for WoW 8.2
+	frame:RegisterEvent("AZERITE_ESSENCE_CHANGED")				--new for WoW 8.2
+	frame:RegisterEvent("AZERITE_ESSENCE_FORGE_CLOSE")			--new for WoW 8.2
+	frame:RegisterEvent("AZERITE_ESSENCE_FORGE_OPEN")			--new for WoW 8.2
+	frame:RegisterEvent("AZERITE_ESSENCE_MILESTONE_UNLOCKED")	--new for WoW 8.2
+	--frame:RegisterEvent("AZERITE_ESSENCE_UPDATE")				--new for WoW 8.2
+	--frame:RegisterEvent("PENDING_AZERITE_ESSENCE_CHANGED")		--new for WoW 8.2
 		
 	frame:RegisterEvent("LOADING_SCREEN_ENABLED")		--add in AddOn 2.0
 	frame:RegisterEvent("LOADING_SCREEN_DISABLED")		--add in AddOn 2.0
@@ -490,9 +499,30 @@ function G910xmit_OnEvent(frame, event, ...)
             G910isAtForge = false
         end
     elseif event == "AZERITE_ITEM_POWER_LEVEL_CHANGED" then     -- when the necklace levels up
-        G910SendMessage("F")
+        G910SendMessage("n")
     elseif event == "AZERITE_ITEM_EXPERIENCE_CHANGED" then      -- every time the necklace XP bar moves
         G910SendMessage("N")
+        
+    elseif event == "AZERITE_ESSENCE_ACTIVATED" then	-- new ability dropped onto center of necklace
+    	print("AZERITE_ESSENCE_ACTIVATED  arg1 = "..arg1)
+        G910SendMessage("n")
+    --elseif event == "AZERITE_ESSENCE_ACTIVATION_FAILED" then
+    --	print("AZERITE_ESSENCE_ACTIVATION_FAILED")
+    elseif event == "AZERITE_ESSENCE_CHANGED" then
+    	print("AZERITE_ESSENCE_CHANGED")
+    elseif event == "AZERITE_ESSENCE_FORGE_CLOSE" then
+    	--print("AZERITE_ESSENCE_FORGE_CLOSE")
+        G910SendMessage("f")
+    elseif event == "AZERITE_ESSENCE_FORGE_OPEN" then
+    	--print("AZERITE_ESSENCE_FORGE_OPEN")
+        G910SendMessage("F")
+    elseif event == "AZERITE_ESSENCE_MILESTONE_UNLOCKED" then
+    	print("AZERITE_ESSENCE_MILESTONE_UNLOCKED")
+    --elseif event == "AZERITE_ESSENCE_UPDATE" then
+    --	print("AZERITE_ESSENCE_UPDATE")
+    --elseif event == "PENDING_AZERITE_ESSENCE_CHANGED" then
+    --	print("PENDING_AZERITE_ESSENCE_CHANGED")
+        
     end
 end
 
