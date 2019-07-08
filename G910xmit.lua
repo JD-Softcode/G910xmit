@@ -116,6 +116,7 @@ G910healthCodes = {"z", "y", "x", "w"}	--  used to send player health for combat
 --G910UserTimeFactor = 15				--  saved variable in the .toc
 --G910ProfileMemory						--  saved variable in the .toc
 
+
 -------------------------- THE SLASH COMMANDS EXECUTE CODE HERE ------------------------
 
 SlashCmdList["G910CAL"] = function(msg, theEditFrame)		--  /G910calibrate
@@ -193,6 +194,7 @@ SlashCmdList["G910REMEMBER"] = function(msg, theEditFrame)	--   /G910rememberpro
 		local specNow = GetSpecialization()
 		local nameAndSpec = playerName .. tostring(specNow)
 		G910ProfileMemory[nameAndSpec] =  profileNum
+		G910SendMessage(tostring(profileNum))
 		ChatFrame1:AddMessage( "G910xmit: Remembering to show profile "..profileNum.." for "..playerName.." in "..(select(2, GetSpecializationInfo(specNow)) or "No").." spec.")
 	else
 		ChatFrame1:AddMessage( "G910xmit: Type \"/G910rememberprofile x\" where x is a number between 1 and 9.")
@@ -246,11 +248,11 @@ end
 
 function G910showHelp(name)											-- added in 1.15
 	ChatFrame1:AddMessage ("|cffffff00HELP for WoW G"..name.." and G910xmit.|cff00ff66 Find more at |rwww.jdsoftcode.net/warcraft")
-	ChatFrame1:AddMessage ("|cff00ff66  Type /g"..name.."r to reset stuck animations.")
-	ChatFrame1:AddMessage ("|cff00ff66  Type /g"..name.."cdr to reset and resync the cooldown lights.")
-	ChatFrame1:AddMessage ("|cff00ff66  Type /g"..name.."profile # to change lighting colors.")
-	ChatFrame1:AddMessage ("|cff00ff66  Type /g"..name.."rememberprofile # to always switch to the profile for this character/spec.")
-	ChatFrame1:AddMessage ("|cff00ff66  Type /g"..name.."time to adjust messaging rate.")
+	ChatFrame1:AddMessage ("|cff00ff66  Type |r/g"..name.."r|cff00ff66 to reset stuck animations.")
+	ChatFrame1:AddMessage ("|cff00ff66  Type |r/g"..name.."cdr|cff00ff66 to reset and resync the cooldown lights.")
+	ChatFrame1:AddMessage ("|cff00ff66  Type |r/g"..name.."profile #|cff00ff66 to change lighting colors.")
+	ChatFrame1:AddMessage ("|cff00ff66  Type |r/g"..name.."rememberprofile #|cff00ff66 to always switch to the profile for this character/spec.")
+	ChatFrame1:AddMessage ("|cff00ff66  Type |r/g"..name.."time|cff00ff66 to adjust messaging rate.")
 	ChatFrame1:AddMessage ("|cff00ff66  See main application help on lighting profiles, suspending cooldown updates, and setup calibration.|r")
 end
 
@@ -349,6 +351,9 @@ function G910xmit_OnEvent(frame, event, ...)
         end
         G910XmitMinTransmitDelay = G910UserTimeFactor/100	--  delay between each transmit phase (sec)        
         G910loadingScreenActive = false
+        if G910ProfileMemory == nil then	-- prevent errors reading the index of a non-array variable if never been set
+			G910ProfileMemory = {}
+		end
         -- Initial cooldown setup handled by initial talent event sent my game
     elseif event == "LOADING_SCREEN_ENABLED" then           -- new in 2.0 
     	G910suspendCooldownUpdate = true
@@ -435,7 +440,8 @@ function G910xmit_OnEvent(frame, event, ...)
         if (arg2==0) then                           -- arg2 == 0 only upon initial character login to the game world
             G910suspendCooldownUpdate = true						-- pause automatic updating
             C_Timer.After(2.0, resetTheCooldowns)                   -- full, no-blink update after things settle down, else all show not ready
-            C_Timer.After(4.0, applyRememberedProfile)
+            C_Timer.After(4.0, resetTheCooldowns)                   -- swapping characters was not updating everything on just 1 call
+            C_Timer.After(1.0, applyRememberedProfile)
             C_Timer.After(6.0, function() G910suspendCooldownUpdate = false end)
         else
             local specNow = GetSpecialization()
@@ -444,7 +450,8 @@ function G910xmit_OnEvent(frame, event, ...)
             	C_Timer.After(0.01, function() G910SendMessage("T") end)       -- play the animation. Calling directly often failed due to more C_Timers immediately after
                 G910suspendCooldownUpdate = true			-- pause automatic updating
                 C_Timer.After(2.1, resetTheCooldowns)       -- catch some early ones right after animation to show progress
-	            C_Timer.After(4.0, applyRememberedProfile)
+	            C_Timer.After(1.0, applyRememberedProfile)
+                C_Timer.After(4.5, resetTheCooldowns)       -- show more progress
                 C_Timer.After(8.0, resetTheCooldowns)       -- certain spells take a long time to show ready
                 C_Timer.After(10.1, function() G910suspendCooldownUpdate = false end)
     	        G910oldSpecialization = specNow
@@ -806,10 +813,10 @@ end
 --------------------------  PROFILE MEMORY RESTORE ------------------------
 
 function applyRememberedProfile()
-	local playerName = GetUnitName("player", true)		
+	local playerName = GetUnitName("player", true)
 	local specNow = GetSpecialization()
 	local nameAndSpec = playerName .. tostring(specNow)
-	local newProfile = G910ProfileMemory[nameAndSpec]
+	local newProfile = G910ProfileMemory[nameAndSpec]	-- will be nil if this table index does not exist
 	if newProfile and newProfile > 0 and newProfile < 10 then
 		G910SendMessage(tostring(newProfile))
 	end
