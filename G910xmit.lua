@@ -186,16 +186,11 @@ SlashCmdList["G910REMEMBER"] = function(msg, theEditFrame)	--   /G910rememberpro
 	local profileNum = math.floor(tonumber(msg))
 	if profileNum and (profileNum > 0 and profileNum < 10) then		-- is a number, and in the valid range
 		local playerName = GetUnitName("player", true)		-- get name & should have no realm (saved var is realm unique)
-		--if string.find(playerName, "-") then				-- if player NOT on same realm, then realm appears after dash
-		--	-- do nothing, we have the realm name included
-		--else
-		--	playerName = playerName.."-"..GetRealmName()  	-- append realm to local player name
-		--end
 		local specNow = GetSpecialization()
 		local nameAndSpec = playerName .. tostring(specNow)
 		G910ProfileMemory[nameAndSpec] =  profileNum
 		G910SendMessage(tostring(profileNum))
-		ChatFrame1:AddMessage( "G910xmit: Remembering to show profile "..profileNum.." for "..playerName.." in "..(select(2, GetSpecializationInfo(specNow)) or "No").." spec.")
+		ChatFrame1:AddMessage( "G910xmit: Remembering to show profile "..profileNum.." for "..playerName.." in "..(select(2, GetSpecializationInfo(specNow)) or "no").." spec.")
 	else
 		ChatFrame1:AddMessage( "G910xmit: Type \"/G910rememberprofile x\" where x is a number between 1 and 9.")
 	end
@@ -251,7 +246,7 @@ function G910showHelp(name)											-- added in 1.15
 	ChatFrame1:AddMessage ("|cff00ff66  Type |r/g"..name.."r|cff00ff66 to reset stuck animations.")
 	ChatFrame1:AddMessage ("|cff00ff66  Type |r/g"..name.."cdr|cff00ff66 to reset and resync the cooldown lights.")
 	ChatFrame1:AddMessage ("|cff00ff66  Type |r/g"..name.."profile #|cff00ff66 to change lighting colors.")
-	ChatFrame1:AddMessage ("|cff00ff66  Type |r/g"..name.."rememberprofile #|cff00ff66 to always switch to the profile for this character/spec.")
+	ChatFrame1:AddMessage ("|cff00ff66  Type |r/g"..name.."rememberprofile #|cff00ff66 to always use profile # on this character & spec.")
 	ChatFrame1:AddMessage ("|cff00ff66  Type |r/g"..name.."time|cff00ff66 to adjust messaging rate.")
 	ChatFrame1:AddMessage ("|cff00ff66  See main application help on lighting profiles, suspending cooldown updates, and setup calibration.|r")
 end
@@ -316,13 +311,8 @@ function G910xmit_OnLoad(frame)
 	frame:RegisterEvent("AZERITE_ITEM_POWER_LEVEL_CHANGED")		--new for WoW 8.0; add in AddOn 2.0
 	
 	frame:RegisterEvent("AZERITE_ESSENCE_ACTIVATED")			--new for WoW 8.2
-	--frame:RegisterEvent("AZERITE_ESSENCE_ACTIVATION_FAILED")	--new for WoW 8.2
-	frame:RegisterEvent("AZERITE_ESSENCE_CHANGED")				--new for WoW 8.2
 	frame:RegisterEvent("AZERITE_ESSENCE_FORGE_CLOSE")			--new for WoW 8.2
 	frame:RegisterEvent("AZERITE_ESSENCE_FORGE_OPEN")			--new for WoW 8.2
-	frame:RegisterEvent("AZERITE_ESSENCE_MILESTONE_UNLOCKED")	--new for WoW 8.2
-	--frame:RegisterEvent("AZERITE_ESSENCE_UPDATE")				--new for WoW 8.2
-	--frame:RegisterEvent("PENDING_AZERITE_ESSENCE_CHANGED")		--new for WoW 8.2
 		
 	frame:RegisterEvent("LOADING_SCREEN_ENABLED")		--add in AddOn 2.0
 	frame:RegisterEvent("LOADING_SCREEN_DISABLED")		--add in AddOn 2.0
@@ -504,24 +494,11 @@ function G910xmit_OnEvent(frame, event, ...)
         G910SendMessage("N")
         
     elseif event == "AZERITE_ESSENCE_ACTIVATED" then	-- new ability dropped onto center of necklace
-    	print("AZERITE_ESSENCE_ACTIVATED  arg1 = "..arg1)
         G910SendMessage("n")
-    --elseif event == "AZERITE_ESSENCE_ACTIVATION_FAILED" then
-    --	print("AZERITE_ESSENCE_ACTIVATION_FAILED")
-    elseif event == "AZERITE_ESSENCE_CHANGED" then
-    	print("AZERITE_ESSENCE_CHANGED")
     elseif event == "AZERITE_ESSENCE_FORGE_CLOSE" then
-    	--print("AZERITE_ESSENCE_FORGE_CLOSE")
         G910SendMessage("f")
     elseif event == "AZERITE_ESSENCE_FORGE_OPEN" then
-    	--print("AZERITE_ESSENCE_FORGE_OPEN")
         G910SendMessage("F")
-    elseif event == "AZERITE_ESSENCE_MILESTONE_UNLOCKED" then
-    	print("AZERITE_ESSENCE_MILESTONE_UNLOCKED")
-    --elseif event == "AZERITE_ESSENCE_UPDATE" then
-    --	print("AZERITE_ESSENCE_UPDATE")
-    --elseif event == "PENDING_AZERITE_ESSENCE_CHANGED" then
-    --	print("PENDING_AZERITE_ESSENCE_CHANGED")
         
     end
 end
