@@ -174,25 +174,33 @@ SlashCmdList["G910PROFILESWAP"] = function(msg, theEditFrame)	--  LEGACY /G910pr
 end
 
 SlashCmdList["G910PROFILE"] = function(msg, theEditFrame)		--  /G910profile X     Switch to lighting profile X
-	local profileNum = math.floor(tonumber(msg))
-	if profileNum and (profileNum > 0 and profileNum < 10) then		-- is a number, and in the valid range
-		G910SendMessage(tostring(profileNum))
+	if msg and tonumber(msg) then							-- is a number,
+		local profileNum = math.floor(tonumber(msg))
+		if (profileNum > 0 and profileNum < 10) then		--        and in the valid range
+			G910SendMessage(tostring(profileNum))
+		else
+			ChatFrame1:AddMessage( "G910xmit: Type \"/G910profile x\" where x is a number between 1 and 9.")
+		end
 	else
-		ChatFrame1:AddMessage( "G910xmit: Type \"/G910profile x\" where x is a number between 1 and 9.")
+			ChatFrame1:AddMessage( "G910xmit: Type \"/G910profile x\" where x is a number between 1 and 9.")
 	end
 end
 
 SlashCmdList["G910REMEMBER"] = function(msg, theEditFrame)	--   /G910rememberprofile X    Always apply X when this char/spec logs in
-	local profileNum = math.floor(tonumber(msg))
-	if profileNum and (profileNum > 0 and profileNum < 10) then		-- is a number, and in the valid range
-		local playerName = GetUnitName("player", true)		-- get name & should have no realm (saved var is realm unique)
-		local specNow = GetSpecialization()
-		local nameAndSpec = playerName .. tostring(specNow)
-		G910ProfileMemory[nameAndSpec] =  profileNum
-		G910SendMessage(tostring(profileNum))
-		ChatFrame1:AddMessage( "G910xmit: Remembering to show profile "..profileNum.." for "..playerName.." in "..(select(2, GetSpecializationInfo(specNow)) or "no").." spec.")
+	if msg and tonumber(msg) then							-- is a number,
+		local profileNum = math.floor(tonumber(msg))
+		if profileNum and (profileNum > 0 and profileNum < 10) then		-- is a number, and in the valid range
+			local playerName = GetUnitName("player", true)		-- get name & should have no realm (saved var is realm unique)
+			local specNow = GetSpecialization()
+			local nameAndSpec = playerName .. tostring(specNow)
+			G910ProfileMemory[nameAndSpec] =  profileNum
+			G910SendMessage(tostring(profileNum))
+			ChatFrame1:AddMessage( "G910xmit: Remembering to show profile "..profileNum.." for "..playerName.." in "..(select(2, GetSpecializationInfo(specNow)) or "no").." spec.")
+		else
+			ChatFrame1:AddMessage( "G910xmit: Type \"/G910rememberprofile x\" where x is a number between 1 and 9.")
+		end
 	else
-		ChatFrame1:AddMessage( "G910xmit: Type \"/G910rememberprofile x\" where x is a number between 1 and 9.")
+			ChatFrame1:AddMessage( "G910xmit: Type \"/G910rememberprofile x\" where x is a number between 1 and 9.")
 	end
 end
 
