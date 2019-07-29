@@ -87,6 +87,8 @@ SLASH_G910REMEMBER6	   = "/G512rememberprofile"
 
 -------------------------- ADD-ON GLOBALS ------------------------
 
+G910xmit = {}							-- namespace for all addon functions.
+
 G910inCalibrationMode = 0				--  flag to suspend event processing (and update user message)
 G910calCountdown = 0
 G910chatInputOpen = false				--  flag to know chat window state and if just changed
@@ -125,15 +127,15 @@ SlashCmdList["G910CAL"] = function(msg, theEditFrame)		--  /G910calibrate
 	G910XmitPhase = 1
 	G910XmitCounter = 0
 	G910chatInputOpen = false			--forget the chat window was open (so "e" doesn't fire after 30 sec)
-	G910SetupGuardPixels()
-	G910GuardPixels(0)
-	G910xmitD7Texture:SetTexture("Interface\\AddOns\\G910xmit\\06")	-- calibration pattern
-	G910xmitD6Texture:SetTexture("Interface\\AddOns\\G910xmit\\07")
-	G910xmitD5Texture:SetTexture("Interface\\AddOns\\G910xmit\\05")
-	G910xmitD4Texture:SetTexture("Interface\\AddOns\\G910xmit\\04")
-	G910xmitD3Texture:SetTexture("Interface\\AddOns\\G910xmit\\03")
-	G910xmitD2Texture:SetTexture("Interface\\AddOns\\G910xmit\\01")
-	G910xmitD1Texture:SetTexture("Interface\\AddOns\\G910xmit\\02")
+	G910xmit:setupGuardPixels()
+	G910xmit:guardPixels(0)
+	G910xmitFrameD7Texture:SetTexture("Interface\\AddOns\\G910xmit\\06")	-- calibration pattern
+	G910xmitFrameD6Texture:SetTexture("Interface\\AddOns\\G910xmit\\07")
+	G910xmitFrameD5Texture:SetTexture("Interface\\AddOns\\G910xmit\\05")
+	G910xmitFrameD4Texture:SetTexture("Interface\\AddOns\\G910xmit\\04")
+	G910xmitFrameD3Texture:SetTexture("Interface\\AddOns\\G910xmit\\03")
+	G910xmitFrameD2Texture:SetTexture("Interface\\AddOns\\G910xmit\\01")
+	G910xmitFrameD1Texture:SetTexture("Interface\\AddOns\\G910xmit\\02")
 	G910inCalibrationMode = 3
 	G910calCountdown = 30.0
 end
@@ -143,7 +145,7 @@ SlashCmdList["G910RESET"] = function(msg, theEditFrame)		--  /G910reset    Reset
 	G910pendingMessage = ""				--reset the message system
 	G910XmitPhase = 1
 	--G910XmitCounter = 0
-	G910SendMessage("R")
+	G910xmit:sendMessage("R")
 	G910whisperLight = false
 	G910playerOutOfControlEvent = false
 	G910playerInCombat = false
@@ -156,28 +158,28 @@ SlashCmdList["G910CDRESET"] = function(msg, theEditFrame)		--  /G910cdreset    S
 	else
 		ChatFrame1:AddMessage( "G910xmit: Resetting all keyboard lights for action bars.")
 		G910suspendCooldownUpdate = true
-		resetTheCooldowns()
+		G910xmit:resetTheCooldowns()
 		C_Timer.After(5.0, function() G910suspendCooldownUpdate = false end)
 	end
 end
 
 SlashCmdList["G910PROFILE1"] = function(msg, theEditFrame)		--  LEGACY /G910profile1    Activate lighting profile
-	G910SendMessage("1")
+	G910xmit:sendMessage("1")
 end
 
 SlashCmdList["G910PROFILE2"] = function(msg, theEditFrame)		--  LEGACY /G910profile2    Activate lighting profile
-	G910SendMessage("2")
+	G910xmit:sendMessage("2")
 end
 
 SlashCmdList["G910PROFILESWAP"] = function(msg, theEditFrame)	--  LEGACY /G910profileswap    Activate lighting profile
-	G910SendMessage("p")
+	G910xmit:sendMessage("p")
 end
 
 SlashCmdList["G910PROFILE"] = function(msg, theEditFrame)		--  /G910profile X     Switch to lighting profile X
 	if msg and tonumber(msg) then							-- is a number,
 		local profileNum = math.floor(tonumber(msg))
 		if (profileNum > 0 and profileNum < 10) then		--        and in the valid range
-			G910SendMessage(tostring(profileNum))
+			G910xmit:sendMessage(tostring(profileNum))
 		else
 			ChatFrame1:AddMessage( "G910xmit: Type \"/G910profile x\" where x is a number between 1 and 9.")
 		end
@@ -194,7 +196,7 @@ SlashCmdList["G910REMEMBER"] = function(msg, theEditFrame)	--   /G910rememberpro
 			local specNow = GetSpecialization()
 			local nameAndSpec = playerName .. tostring(specNow)
 			G910ProfileMemory[nameAndSpec] =  profileNum
-			G910SendMessage(tostring(profileNum))
+			G910xmit:sendMessage(tostring(profileNum))
 			ChatFrame1:AddMessage( "G910xmit: Remembering to show profile "..profileNum.." for "..playerName.." in "..(select(2, GetSpecializationInfo(specNow)) or "no").." spec.")
 		else
 			ChatFrame1:AddMessage( "G910xmit: Type \"/G910rememberprofile x\" where x is a number between 1 and 9.")
@@ -206,7 +208,7 @@ end
 
 SlashCmdList["G910TRIGGER"] = function(msg, theEditFrame)		-- send arbitrary command for testing
 	ChatFrame1:AddMessage( "G910xmit: Sending ‘"..msg.."’ to WoW G910.")
-	G910SendMessage(msg)
+	G910xmit:sendMessage(msg)
 end
 
 SlashCmdList["G910ACTIONBARS"] = function(msg, theEditFrame)		-- to send, or not, cooldown updates (added in 1.10)
@@ -226,30 +228,30 @@ SlashCmdList["G910ACTIONBARS"] = function(msg, theEditFrame)		-- to send, or not
 end
 
 SlashCmdList["G910HELP9"] = function(msg, theEditFrame)				-- in-game AddOn help
-	G910showHelp("910")
+	G910xmit:showHelp("910")
 end
 
 SlashCmdList["G910HELP8"] = function(msg, theEditFrame)				-- in-game AddOn help
-	G910showHelp("810")
+	G910xmit:showHelp("810")
 end
 
 SlashCmdList["G910HELP4"] = function(msg, theEditFrame)				-- in-game AddOn help
-	G910showHelp("410")
+	G910xmit:showHelp("410")
 end
 
 SlashCmdList["G910HELPP"] = function(msg, theEditFrame)				-- in-game AddOn help
-	G910showHelp("pro")
+	G910xmit:showHelp("pro")
 end
 
 SlashCmdList["G910HELP5"] = function(msg, theEditFrame)				-- in-game AddOn help
-	G910showHelp("513")
+	G910xmit:showHelp("513")
 end
 
 SlashCmdList["G910HELP55"] = function(msg, theEditFrame)			-- in-game AddOn help
-	G910showHelp("512")
+	G910xmit:showHelp("512")
 end
 
-function G910showHelp(name)											-- added in 1.15
+function G910xmit:showHelp(name)											-- added in 1.15
 	ChatFrame1:AddMessage ("|cffffff00HELP for WoW G"..name.." and G910xmit.|cff00ff66 Find more at |rwww.jdsoftcode.net/warcraft")
 	ChatFrame1:AddMessage ("|cff00ff66  Type |r/g"..name.."r|cff00ff66 to reset stuck animations.")
 	ChatFrame1:AddMessage ("|cff00ff66  Type |r/g"..name.."cdr|cff00ff66 to reset and resync the cooldown lights.")
@@ -275,60 +277,61 @@ end
 
 -------------------------- PLUG INTO EVENTS OF INTEREST ------------------------
 
-function G910xmit_OnLoad(frame)
+function G910xmit:OnLoad()
 	--print("G910xmit_OnLoad()")
-	frame:RegisterEvent("PLAYER_ENTERING_WORLD")	-- environment ready
+	local f = G910xmitFrame						-- defined by the XML
+	f:RegisterEvent("PLAYER_ENTERING_WORLD")	-- environment ready
 	
-	frame:RegisterEvent("ACTIONBAR_UPDATE_COOLDOWN") -- (sometimes) cooldown for an actionbar or inventory slot starts; v1.15 add
+	f:RegisterEvent("ACTIONBAR_UPDATE_COOLDOWN") -- (sometimes) cooldown for an actionbar or inventory slot starts; v1.15 add
 	
-	frame:RegisterEvent("PLAYER_REGEN_ENABLED")		-- out of combat
-	frame:RegisterEvent("PLAYER_REGEN_DISABLED")	-- into combat
+	f:RegisterEvent("PLAYER_REGEN_ENABLED")		-- out of combat
+	f:RegisterEvent("PLAYER_REGEN_DISABLED")	-- into combat
 	
-	frame:RegisterEvent("CINEMATIC_START")			-- Only fires for cinematics using in-game engine, not pre-rendered movies
-	frame:RegisterEvent("CINEMATIC_STOP")
-	frame:RegisterEvent("PLAY_MOVIE")				-- fires for pre-rendered movies but has no "done with movie" call
+	f:RegisterEvent("CINEMATIC_START")			-- Only fires for cinematics using in-game engine, not pre-rendered movies
+	f:RegisterEvent("CINEMATIC_STOP")
+	f:RegisterEvent("PLAY_MOVIE")				-- fires for pre-rendered movies but has no "done with movie" call
 	
-	frame:RegisterEvent("PLAYER_MONEY") 			-- player gains or loses money
+	f:RegisterEvent("PLAYER_MONEY") 			-- player gains or loses money
 
-	frame:RegisterEvent("ACHIEVEMENT_EARNED")
-	frame:RegisterEvent("PLAYER_LEVEL_UP")
+	f:RegisterEvent("ACHIEVEMENT_EARNED")
+	f:RegisterEvent("PLAYER_LEVEL_UP")
 
-	frame:RegisterEvent("PLAYER_ALIVE")  			-- both release from death to a graveyard AND accept a rez before releasing spirit; fires at login too
-	frame:RegisterEvent("PLAYER_UNGHOST") 			-- back to life after being a ghost (but not if accept player rez)
-	frame:RegisterEvent("PLAYER_DEAD") 				-- player just died
-	frame:RegisterEvent("PLAYER_CONTROL_GAINED")	-- try and avoid dimming cooldowns for short-term events; 1.7 add
-	frame:RegisterEvent("PLAYER_CONTROL_LOST")
+	f:RegisterEvent("PLAYER_ALIVE")  			-- both release from death to a graveyard AND accept a rez before releasing spirit; fires at login too
+	f:RegisterEvent("PLAYER_UNGHOST") 			-- back to life after being a ghost (but not if accept player rez)
+	f:RegisterEvent("PLAYER_DEAD") 				-- player just died
+	f:RegisterEvent("PLAYER_CONTROL_GAINED")	-- try and avoid dimming cooldowns for short-term events; 1.7 add
+	f:RegisterEvent("PLAYER_CONTROL_LOST")
 	
-	frame:RegisterEvent("CHAT_MSG_WHISPER")			-- player receives a whisper from another player's character.
-	frame:RegisterEvent("CHAT_MSG_BN_WHISPER")		-- Fires when you receive a whisper though Battle.net
-	frame:RegisterEvent("CHAT_MSG_BN_WHISPER_INFORM")-- Fires everytime you send a whisper though Battle.net
-	frame:RegisterEvent("PLAYER_STARTED_MOVING")	-- started forward/backward/strafe. Not jumping, turning, or taking a taxi.
+	f:RegisterEvent("CHAT_MSG_WHISPER")			-- player receives a whisper from another player's character.
+	f:RegisterEvent("CHAT_MSG_BN_WHISPER")		-- Fires when you receive a whisper though Battle.net
+	f:RegisterEvent("CHAT_MSG_BN_WHISPER_INFORM")-- Fires everytime you send a whisper though Battle.net
+	f:RegisterEvent("PLAYER_STARTED_MOVING")	-- started forward/backward/strafe. Not jumping, turning, or taking a taxi.
 	
-	frame:RegisterEvent("READY_CHECK")				-- ready check is triggered.
-	frame:RegisterEvent("ROLE_POLL_BEGIN")			-- role check is triggered.   v2.0 add
-	--frame:RegisterEvent("CHAT_MSG_RAID_WARNING")	-- raid leader raid warning received // no, this will often come at bad times for animation
-	frame:RegisterEvent("DUEL_REQUESTED")			-- these next 5 added in 1.6
+	f:RegisterEvent("READY_CHECK")				-- ready check is triggered.
+	f:RegisterEvent("ROLE_POLL_BEGIN")			-- role check is triggered.   v2.0 add
+	--f:RegisterEvent("CHAT_MSG_RAID_WARNING")	-- raid leader raid warning received // no, this will often come at bad times for animation
+	f:RegisterEvent("DUEL_REQUESTED")			-- these next 5 added in 1.6
 	
-	frame:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")-- player switches talent builds. in WoW 7.0, this triggers every time a talent is changed
-	frame:RegisterEvent("HEARTHSTONE_BOUND")
+	f:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")-- player switches talent builds. in WoW 7.0, this triggers every time a talent is changed
+	f:RegisterEvent("HEARTHSTONE_BOUND")
 	
-	frame:RegisterEvent("TRANSMOGRIFY_SUCCESS")
-	frame:RegisterEvent("ARTIFACT_UPDATE")
-	frame:RegisterEvent("ARTIFACT_CLOSE")
-	frame:RegisterEvent("AZERITE_ITEM_EXPERIENCE_CHANGED")		--new for WoW 8.0; add in AddOn 2.0
-	frame:RegisterEvent("AZERITE_ITEM_POWER_LEVEL_CHANGED")		--new for WoW 8.0; add in AddOn 2.0
+	f:RegisterEvent("TRANSMOGRIFY_SUCCESS")
+	f:RegisterEvent("ARTIFACT_UPDATE")
+	f:RegisterEvent("ARTIFACT_CLOSE")
+	f:RegisterEvent("AZERITE_ITEM_EXPERIENCE_CHANGED")		--new for WoW 8.0; add in AddOn 2.0
+	f:RegisterEvent("AZERITE_ITEM_POWER_LEVEL_CHANGED")		--new for WoW 8.0; add in AddOn 2.0
 	
-	frame:RegisterEvent("AZERITE_ESSENCE_ACTIVATED")			--new for WoW 8.2
-	--frame:RegisterEvent("AZERITE_ESSENCE_ACTIVATION_FAILED")	--new for WoW 8.2
-	frame:RegisterEvent("AZERITE_ESSENCE_CHANGED")				--new for WoW 8.2
-	frame:RegisterEvent("AZERITE_ESSENCE_FORGE_CLOSE")			--new for WoW 8.2
-	frame:RegisterEvent("AZERITE_ESSENCE_FORGE_OPEN")			--new for WoW 8.2
-	frame:RegisterEvent("AZERITE_ESSENCE_MILESTONE_UNLOCKED")	--new for WoW 8.2
-	--frame:RegisterEvent("AZERITE_ESSENCE_UPDATE")				--new for WoW 8.2
-	--frame:RegisterEvent("PENDING_AZERITE_ESSENCE_CHANGED")		--new for WoW 8.2
+	f:RegisterEvent("AZERITE_ESSENCE_ACTIVATED")			--new for WoW 8.2
+	--f:RegisterEvent("AZERITE_ESSENCE_ACTIVATION_FAILED")	--new for WoW 8.2
+	f:RegisterEvent("AZERITE_ESSENCE_CHANGED")				--new for WoW 8.2
+	f:RegisterEvent("AZERITE_ESSENCE_FORGE_CLOSE")			--new for WoW 8.2
+	f:RegisterEvent("AZERITE_ESSENCE_FORGE_OPEN")			--new for WoW 8.2
+	f:RegisterEvent("AZERITE_ESSENCE_MILESTONE_UNLOCKED")	--new for WoW 8.2
+	--f:RegisterEvent("AZERITE_ESSENCE_UPDATE")				--new for WoW 8.2
+	--f:RegisterEvent("PENDING_AZERITE_ESSENCE_CHANGED")		--new for WoW 8.2
 		
-	frame:RegisterEvent("LOADING_SCREEN_ENABLED")		--add in AddOn 2.0
-	frame:RegisterEvent("LOADING_SCREEN_DISABLED")		--add in AddOn 2.0
+	f:RegisterEvent("LOADING_SCREEN_ENABLED")		--add in AddOn 2.0
+	f:RegisterEvent("LOADING_SCREEN_DISABLED")		--add in AddOn 2.0
 
 	G910XmitPhase = 0					-- status of the toggling guard textures
 	G910XmitTransmitCounter = 0			-- counts up to G910XmitMinTransmitDelay between each message xmit phase
@@ -341,7 +344,7 @@ end
 ---##################################
 ---#########  ON_EVENT   ############
 ---##################################
-function G910xmit_OnEvent(frame, event, ...)
+function G910xmit:OnEvent(event, ...)
 	--print("G910 Event: "..event)
 	local arg1, arg2 = ...;
 	if (G910inCalibrationMode == true) then 
@@ -349,15 +352,15 @@ function G910xmit_OnEvent(frame, event, ...)
 	end
     if event == "PLAYER_ENTERING_WORLD" then        -- set stuff up
     	--print("PLAYER_ENTERING_WORLD")
-        G910xmit:Show()
-        G910SetupGuardPixels()
-        G910GuardPixels(0)
+        G910xmitFrame:Show()
+        self:setupGuardPixels()
+        self:guardPixels(0)
         G910wasMoney = GetMoney()
         G910oldSpecialization = GetSpecialization()
         G910isAtForge = false   
-        C_Timer.After(1.5, function() G910SendMessage("e") end) -- send message chat field has closed
+        C_Timer.After(1.5, function() self:sendMessage("e") end) -- send message chat field has closed
         G910chatInputOpen = false               				-- and remember it's closed
-        G910oldPlayerHealthQuartile = healthQuartile( UnitHealth("player") / UnitHealthMax("player") )
+        G910oldPlayerHealthQuartile = self:healthQuartile( UnitHealth("player") / UnitHealthMax("player") )
         if G910UserTimeFactor == nil or G910UserTimeFactor <= 0 or G910UserTimeFactor > 50 then
         	G910UserTimeFactor = 15
         end
@@ -375,11 +378,11 @@ function G910xmit_OnEvent(frame, event, ...)
         C_Timer.After(2.0, function() G910suspendCooldownUpdate = false end)
     elseif event == "PLAYER_STARTED_MOVING" then    -- Clear the whisper light & movie mode upon moving.
         if G910whisperLight then
-            G910SendMessage("i")
+            self:sendMessage("i")
             G910whisperLight = false
         end
         if G910cinematicMovieMode then
-            G910SendMessage("V")
+            self:sendMessage("V")
             G910cinematicMovieMode = false
         end
     elseif event == "PLAYER_CONTROL_LOST" then      -- added in 1.7
@@ -387,104 +390,104 @@ function G910xmit_OnEvent(frame, event, ...)
     elseif event == "PLAYER_CONTROL_GAINED" then    -- added in 1.7
         G910playerOutOfControlEvent = false
     elseif event == "PLAYER_REGEN_DISABLED" then    -- Into combat
-        checkAndSendHealthPulseRateUpdate()
+        self:checkAndSendHealthPulseRateUpdate()
         G910healthUpdateTimer = GetTime() + 2.0
-        G910SendMessage("C")
+        self:sendMessage("C")
         G910playerInCombat = true
     elseif event == "PLAYER_REGEN_ENABLED" then     -- Out of combat
-        C_Timer.After(0.01, function() G910SendMessage("O") end) -- ensure it goes
+        C_Timer.After(0.01, function() self:sendMessage("O") end) -- ensure it goes
         G910playerInCombat = false
-		C_Timer.After(5.0, function() if G910playerInCombat==false then G910SendMessage("O") end end)
+		C_Timer.After(5.0, function() if G910playerInCombat==false then self:sendMessage("O") end end)
 				-- after 5 seconds, send it again (1.14 add, out in 2.0, back in on 2.1)
     elseif event == "TRANSMOGRIFY_SUCCESS" then     -- added in 1.6
-        searchAndDestroy("J")                       -- added in 1.8 to stop multiple plays (one sent for each item xmogged)
-        G910SendMessage("J")
+        self:searchAndDestroy("J")                       -- added in 1.8 to stop multiple plays (one sent for each item xmogged)
+        self:sendMessage("J")
     elseif event == "PLAYER_MONEY" then
         local moneyGain = GetMoney() - G910wasMoney
-        if     (moneyGain <= -10000)                      then G910SendMessage("g")
-        elseif (moneyGain > -10000 and moneyGain <= -100) then G910SendMessage("s") 
-        elseif (moneyGain > -100 and moneyGain < 0)       then G910SendMessage("m") 
-        elseif (moneyGain > 0 and moneyGain < 100)        then G910SendMessage("M") 
-        elseif (moneyGain >= 100 and moneyGain < 10000)   then G910SendMessage("S") 
-        else                                                   G910SendMessage("G")
+        if     (moneyGain <= -10000)                      then self:sendMessage("g")
+        elseif (moneyGain > -10000 and moneyGain <= -100) then self:sendMessage("s") 
+        elseif (moneyGain > -100 and moneyGain < 0)       then self:sendMessage("m") 
+        elseif (moneyGain > 0 and moneyGain < 100)        then self:sendMessage("M") 
+        elseif (moneyGain >= 100 and moneyGain < 10000)   then self:sendMessage("S") 
+        else                                                   self:sendMessage("G")
         end
         G910wasMoney = GetMoney()
     elseif event == "ACHIEVEMENT_EARNED" then       -- a cheesement
-        G910SendMessage("A")
+        self:sendMessage("A")
     elseif event == "PLAYER_LEVEL_UP" then          -- Ding!
-        G910SendMessage("A")
+        self:sendMessage("A")
     elseif event == "PLAYER_DEAD" then              -- Stood in the fire
-        G910SendMessage("D")
+        self:sendMessage("D")
     elseif event == "PLAYER_ALIVE" then             -- got player rez while face-down -OR- released to graveyard & still dead
         if ((UnitIsDeadOrGhost("player") == false) or (UnitIsDeadOrGhost("player") == nil)) then
                                                     -- because ==1 means must have released to graveyard but is actually still dead
-            C_Timer.After(0.01, function() G910SendMessage("U") end) -- ensure it goes
-            C_Timer.After(5.0, function() G910SendMessage("U") end)  -- send it again after 5 seconds (1.14 add (G910extraAliveAgain), out in 2.0, back in 2.1)
+            C_Timer.After(0.01, function() self:sendMessage("U") end) -- ensure it goes
+            C_Timer.After(5.0, function() self:sendMessage("U") end)  -- send it again after 5 seconds (1.14 add (G910extraAliveAgain), out in 2.0, back in 2.1)
         end                                         
     elseif event == "PLAYER_UNGHOST" then           -- transition from ghost form to alive after running back to corpse or spirit healer
-        C_Timer.After(0.01, function() G910SendMessage("U") end) -- ensure it goes
-        C_Timer.After(5.0, function() G910SendMessage("U") end)  -- send it again after 5 seconds (1.14 add (G910extraAliveAgain), out in 2.0, back in 2.1)
+        C_Timer.After(0.01, function() self:sendMessage("U") end) -- ensure it goes
+        C_Timer.After(5.0, function() self:sendMessage("U") end)  -- send it again after 5 seconds (1.14 add (G910extraAliveAgain), out in 2.0, back in 2.1)
     elseif event == "READY_CHECK" then              -- Leeeeeeroyyyyyy!!!
-        G910SendMessage("H")
+        self:sendMessage("H")
     elseif event == "DUEL_REQUESTED" then           -- added in 1.6
-        G910SendMessage("H")
+        self:sendMessage("H")
     elseif event == "ROLE_POLL_BEGIN" then          -- added in 2.0
-        G910SendMessage("r")
+        self:sendMessage("r")
     --elseif event == "CHAT_MSG_RAID_WARNING" then  -- added in 2.0   There is too much going on during a fight for a /rw on keyboard lights to work well
-    --    G910SendMessage("f")
+    --    self:sendMessage("f")
     elseif event == "HEARTHSTONE_BOUND" then        -- added in 1.6
-        G910SendMessage("h")
+        self:sendMessage("h")
     elseif event == "CINEMATIC_START" then          -- Into a movie -- fires for new character in-game movie, garrison building reveal, etc.
         if G910cinematicMovieMode == false then         -- does not fire for in-game pre-renders like Lich King death
-            G910SendMessage("W")
+            self:sendMessage("W")
             G910cinematicMovieMode = true
         end
     elseif event == "CINEMATIC_STOP" then           -- Out of an in-game movie
-        G910SendMessage("V")
+        self:sendMessage("V")
         G910cinematicMovieMode = false
     elseif event == "PLAY_MOVIE" then               -- Fires for in-game pre-rendered movies, like WoD end-of-zone movies. No "done" signal
         if G910cinematicMovieMode == false then         -- don't send second darken signal if one already went (player might stack movie plays)
-            G910SendMessage("W")
+            self:sendMessage("W")
             G910cinematicMovieMode = true
         end
     elseif event == "ACTIVE_TALENT_GROUP_CHANGED" then-- changed spec; major overhaul in 1.15
         --print("ACTIVE_TALENT_GROUP_CHANGED "..arg1.."  "..arg2)
         if (arg2==0) then                           -- arg2 == 0 only upon initial character login to the game world
             G910suspendCooldownUpdate = true						-- pause automatic updating
-            C_Timer.After(2.0, resetTheCooldowns)                   -- full, no-blink update after things settle down, else all show not ready
-            C_Timer.After(4.0, resetTheCooldowns)                   -- swapping characters was not updating everything on just 1 call
-            C_Timer.After(1.0, applyRememberedProfile)
+            C_Timer.After(2.0, self:resetTheCooldowns())                   -- full, no-blink update after things settle down, else all show not ready
+            C_Timer.After(4.0, self:resetTheCooldowns())                   -- swapping characters was not updating everything on just 1 call
+            C_Timer.After(1.0, self:applyRememberedProfile())
             C_Timer.After(6.0, function() G910suspendCooldownUpdate = false end)
         else
             local specNow = GetSpecialization()
             --print("  specNow = "..specNow.."  G910oldSpecialization = "..G910oldSpecialization)
             if specNow ~= G910oldSpecialization then        -- if the actual spec has changed and not just a talent,
-            	C_Timer.After(0.01, function() G910SendMessage("T") end)       -- play the animation. Calling directly often failed due to more C_Timers immediately after
+            	C_Timer.After(0.01, function() self:sendMessage("T") end)       -- play the animation. Calling directly often failed due to more C_Timers immediately after
                 G910suspendCooldownUpdate = true			-- pause automatic updating
-                C_Timer.After(2.1, resetTheCooldowns)       -- catch some early ones right after animation to show progress
-	            C_Timer.After(1.0, applyRememberedProfile)
-                C_Timer.After(4.5, resetTheCooldowns)       -- show more progress
-                C_Timer.After(8.0, resetTheCooldowns)       -- certain spells take a long time to show ready
+                C_Timer.After(2.1, self:resetTheCooldowns())       -- catch some early ones right after animation to show progress
+	            C_Timer.After(1.0, self:applyRememberedProfile())
+                C_Timer.After(4.5, self:resetTheCooldowns())       -- show more progress
+                C_Timer.After(8.0, self:resetTheCooldowns())       -- certain spells take a long time to show ready
                 C_Timer.After(10.1, function() G910suspendCooldownUpdate = false end)
     	        G910oldSpecialization = specNow
             end
         end
     elseif event == "ACTIONBAR_UPDATE_COOLDOWN" then    -- added in 1.15; this really doesn't fire like the API description says
-		G910updateTheCooldowns()
+		self:updateTheCooldowns()
 		G910cooldownUpdateTimer = GetTime() + G910updateCooldownsInterval 
     elseif event == "CHAT_MSG_WHISPER" then         -- Got a whisper
         if not G910whisperLight then
-            G910SendMessage("I")
+            self:sendMessage("I")
             G910whisperLight = true
         end
     elseif event == "CHAT_MSG_BN_WHISPER" then      -- Got a Battle.net whisper
         if not G910whisperLight then
-            G910SendMessage("I")
+            self:sendMessage("I")
             G910whisperLight = true
         end
     elseif event == "CHAT_MSG_BN_WHISPER_INFORM" then-- player sent a battlenet whisper, so cancel whisper light
         if G910whisperLight then
-            G910SendMessage("i")
+            self:sendMessage("i")
             G910whisperLight = false
         end
     elseif event == "ARTIFACT_UPDATE" then          -- added in 1.6
@@ -492,33 +495,33 @@ function G910xmit_OnEvent(frame, event, ...)
             if G910isAtForge then               -- if this update is happening while the forge is open
 		-- Code Removed; since WoW 8.0, Legion artifact weapons cannot be upgraded
             else                                -- if we were not previously at the forge, play opening forge animation
-                G910SendMessage("F")
+                self:sendMessage("F")
                 G910isAtForge = true
             end
         end
     elseif event == "ARTIFACT_CLOSE" then           -- added in 1.6
         if G910isAtForge then               -- if we were at the forge, then play animation
-            G910SendMessage("f")
+            self:sendMessage("f")
             G910isAtForge = false
         end
     elseif event == "AZERITE_ITEM_POWER_LEVEL_CHANGED" then     -- when the necklace levels up
-        G910SendMessage("n")
+        self:sendMessage("n")
     elseif event == "AZERITE_ITEM_EXPERIENCE_CHANGED" then      -- every time the necklace XP bar moves
-        G910SendMessage("N")
+        self:sendMessage("N")
         
     elseif event == "AZERITE_ESSENCE_ACTIVATED" then	-- new ability dropped onto center of necklace
     	print("AZERITE_ESSENCE_ACTIVATED  arg1 = "..arg1)
-        G910SendMessage("n")
+        self:sendMessage("n")
     --elseif event == "AZERITE_ESSENCE_ACTIVATION_FAILED" then
     --	print("AZERITE_ESSENCE_ACTIVATION_FAILED")
     elseif event == "AZERITE_ESSENCE_CHANGED" then
     	print("AZERITE_ESSENCE_CHANGED")
     elseif event == "AZERITE_ESSENCE_FORGE_CLOSE" then
     	--print("AZERITE_ESSENCE_FORGE_CLOSE")
-        G910SendMessage("f")
+        self:sendMessage("f")
     elseif event == "AZERITE_ESSENCE_FORGE_OPEN" then
     	--print("AZERITE_ESSENCE_FORGE_OPEN")
-        G910SendMessage("F")
+        self:sendMessage("F")
     elseif event == "AZERITE_ESSENCE_MILESTONE_UNLOCKED" then
     	print("AZERITE_ESSENCE_MILESTONE_UNLOCKED")
     --elseif event == "AZERITE_ESSENCE_UPDATE" then
@@ -533,14 +536,14 @@ end
 ---##################################
 ---#########  ON_UPDATE   ###########
 ---##################################
-function G910xmit_OnUpdate(frame, elapsed)
+function G910xmit:OnUpdate(elapsed)
 	--If we're blocked by a loading screen, do nothing.
 	if (G910loadingScreenActive == true) then
 		return								-- should reduce losing alive/dead messages zoning in/out of instances
 	end
 	-- If in calibration mode, update the clock and leave.
 	if G910calCountdown > 0 then
-		handleCalibrationCountdown(elapsed)
+		self:handleCalibrationCountdown(elapsed)
 		return
 	end
 	-- Either update the current message blinker or display next message in queue
@@ -549,10 +552,10 @@ function G910xmit_OnUpdate(frame, elapsed)
 		if G910XmitTransmitCounter >= G910XmitMinTransmitDelay then		-- added in 1.12; simplified in 2.0
 			G910XmitTransmitCounter = 0
 			if G910XmitPhase == 2 then						--first phase with new msg and blinker off complete, so turn on the blinker
-				G910GuardPixels(1)
+				self:guardPixels(1)
 				G910XmitPhase = 1
 			elseif G910XmitPhase == 1 then					--second phase has had adequate time to be scanned so configure for next message
-				--G910GuardPixels(0)
+				--self:guardPixels(0)
 				G910XmitPhase = 0
 			end
 		end
@@ -563,42 +566,42 @@ function G910xmit_OnUpdate(frame, elapsed)
 			color = string.sub(G910pendingMessage,2,2)   -- ! with nothing else is an error
 			nextMessage = string.sub(G910pendingMessage,3,3)
 			G910pendingMessage = string.sub(G910pendingMessage,3)	--remove first two chars (3rd removed below)
-			putMsgOnPixels(nextMessage,color)
+			self:putMsgOnPixels(nextMessage,color)
 		else
-			putMsgOnPixels(nextMessage)
+			self:putMsgOnPixels(nextMessage)
 		end
 		G910pendingMessage = string.sub(G910pendingMessage,2)	--remove first char
-		G910GuardPixels(0)
+		self:guardPixels(0)
 		G910XmitPhase = 2
 		G910XmitTransmitCounter = 0
 	end
 	-- If a chat window opened or closed, signal the app
 	if GetCurrentKeyBoardFocus() == nil then		-- is a typing window open for input? (no window = nil)
 		if G910chatInputOpen == true then			-- if no typing field has focus, then if I think one does,
-			G910SendMessage("e")					-- send message chat field has closed
+			self:sendMessage("e")					-- send message chat field has closed
 			G910chatInputOpen = false				-- and remember it's closed
 		end
 	else
 		if G910chatInputOpen == false then			-- if a typing field has focus, but didn't before,
-			G910SendMessage("E")					-- send message chat field has opened
+			self:sendMessage("E")					-- send message chat field has opened
 			G910chatInputOpen = true				-- and remember it's open
 		end
 	end
 	-- Periodically update the status of the action bar cooldowns
 	local now = GetTime()
 	if now > G910cooldownUpdateTimer then
-		G910updateTheCooldowns()
+		self:updateTheCooldowns()
 		G910cooldownUpdateTimer = now + G910updateCooldownsInterval 	-- update cooldowns periodically
 	end
 	-- Periodically update the health % of the player if in combat
 	if (G910playerInCombat == true) and (now > G910healthUpdateTimer) then
-		checkAndSendHealthPulseRateUpdate()
+		self:checkAndSendHealthPulseRateUpdate()
 		G910healthUpdateTimer = now + 2.0			-- update health pulsing every 2 seconds
 	end
 end
 
 
-function handleCalibrationCountdown(elapsed)
+function G910xmit:handleCalibrationCountdown(elapsed)
 	G910calCountdown = G910calCountdown - elapsed
 	if ( (G910inCalibrationMode==3) and (G910calCountdown<20) ) then
 		ChatFrame1:AddMessage( "G910xmit is in calibration mode for the next 20 seconds.")
@@ -614,7 +617,7 @@ function handleCalibrationCountdown(elapsed)
 end
 
 
-function searchAndDestroy(theMsg)		-- retuns true if theMsg found and removed
+function G910xmit:searchAndDestroy(theMsg)		-- retuns true if theMsg found and removed
 	local count = 0
 	local wasFound = false
 	G910pendingMessage, count = string.gsub(G910pendingMessage, theMsg, "", 1)	-- replace one of theMsg with nothing
@@ -627,7 +630,7 @@ end
 
 -------------------------- TO TAP OUT THE BITS ------------------------
 
-function putMsgOnPixels(msg,color)		-- color is nil when this is called with just putMsgOnPixels(msg)
+function G910xmit:putMsgOnPixels(msg,color)		-- color is nil when this is called with just self:putMsgOnPixels(msg)
 	--ChatFrame1:AddMessage("putting "..msg.." on the color pixels using color "..tostring(color))
 	local bitmask = 1
 	local texture = "07"			-- use white pixels when color is nil
@@ -646,16 +649,16 @@ function putMsgOnPixels(msg,color)		-- color is nil when this is called with jus
 	--print("analyzing byte" .. theCode)
 	for i = 1,7 do
 		if bit.band(theCode,bitmask) > 0 then		-- uses C library that Blizzard included
-			_G["G910xmitD"..i.."Texture"]:SetTexture("Interface\\AddOns\\G910xmit\\"..texture)
+			_G["G910xmitFrameD"..i.."Texture"]:SetTexture("Interface\\AddOns\\G910xmit\\"..texture)
 		else
-			_G["G910xmitD"..i.."Texture"]:SetTexture("Interface\\AddOns\\G910xmit\\00")
+			_G["G910xmitFrameD"..i.."Texture"]:SetTexture("Interface\\AddOns\\G910xmit\\00")
 		end	
 		bitmask = bitmask * 2						-- proven faster than bit shifting
 	end
 end
 
 
-function G910SendMessage(message)
+function G910xmit:sendMessage(message)
 	--print("G910SendMessage with "..message)
 	if message == "T" then						-- have spec change jump ahead of cooldown changes that leak thru
 		G910pendingMessage = message				-- in fact, purge everything else since spec change happens when it's "quiet"
@@ -669,34 +672,34 @@ function G910SendMessage(message)
 end
 
 
-function G910GuardPixels(state)
+function G910xmit:guardPixels(state)
 	if state == 0 then
-		G910xmitR2Texture:SetTexture("Interface\\AddOns\\G910xmit\\00")
-		G910xmitL2Texture:SetTexture("Interface\\AddOns\\G910xmit\\00")
+		G910xmitFrameR2Texture:SetTexture("Interface\\AddOns\\G910xmit\\00")
+		G910xmitFrameL2Texture:SetTexture("Interface\\AddOns\\G910xmit\\00")
 	else
-		G910xmitR2Texture:SetTexture("Interface\\AddOns\\G910xmit\\07")
-		G910xmitL2Texture:SetTexture("Interface\\AddOns\\G910xmit\\01")
+		G910xmitFrameR2Texture:SetTexture("Interface\\AddOns\\G910xmit\\07")
+		G910xmitFrameL2Texture:SetTexture("Interface\\AddOns\\G910xmit\\01")
 	end	
 end
 	
 	
-function G910SetupGuardPixels()		
-	G910xmitR1Texture:SetTexture("Interface\\AddOns\\G910xmit\\07")
-	G910xmitL1Texture:SetTexture("Interface\\AddOns\\G910xmit\\01")
+function G910xmit:setupGuardPixels()		
+	G910xmitFrameR1Texture:SetTexture("Interface\\AddOns\\G910xmit\\07")
+	G910xmitFrameL1Texture:SetTexture("Interface\\AddOns\\G910xmit\\01")
 end
 
 -------------------------- TO ADJUST COMBAT PULSE RATE  ------------------------
 
-function checkAndSendHealthPulseRateUpdate()
-	local newQuartile = healthQuartile (  (UnitHealth("player") + UnitGetTotalAbsorbs("player") ) / UnitHealthMax("player") )
+function G910xmit:checkAndSendHealthPulseRateUpdate()
+	local newQuartile = self:healthQuartile (  (UnitHealth("player") + UnitGetTotalAbsorbs("player") ) / UnitHealthMax("player") )
 	if newQuartile ~= G910oldPlayerHealthQuartile then 
-		G910SendMessage(G910healthCodes[newQuartile])
+		self:sendMessage(G910healthCodes[newQuartile])
 		G910oldPlayerHealthQuartile = newQuartile
 	end
 end
 
 
-function healthQuartile(testVal)
+function G910xmit:healthQuartile(testVal)
 	if testVal < 0.26 then 
 		return 1
 	elseif testVal < 0.51 then 
@@ -710,32 +713,32 @@ end
 
 --------------------------  TO TRACK AND UPDATE ACTION BARS ------------------------
 
-function G910updateTheCooldowns()
+function G910xmit:updateTheCooldowns()
 	if ( G910SuppressCooldowns ~= true ) and ( G910suspendCooldownUpdate ~= true ) then	-- v1.10 add; speed things up (a tiny bit) if cooldowns aren't wanted.
-		if ( shouldTheCooldownsBeSuspended() == false ) then							-- ignore cooldowns while on a taxi, out of control, or dead
-			local offset = determineBarOffset()
-			if scanCooldownFlagsTrueIfChanged(G910cooldownZone1, offset) then
-				sendMessageFixingAnyOverlaps(G910cooldownZone1, "!R")
+		if ( self:shouldTheCooldownsBeSuspended() == false ) then							-- ignore cooldowns while on a taxi, out of control, or dead
+			local offset = self:determineBarOffset()
+			if self:scanCooldownFlagsTrueIfChanged(G910cooldownZone1, offset) then
+				self:sendMessageFixingAnyOverlaps(G910cooldownZone1, "!R")
 			end
-			if scanCooldownFlagsTrueIfChanged(G910cooldownZone2, offset) then
-				sendMessageFixingAnyOverlaps(G910cooldownZone2, "!B")
+			if self:scanCooldownFlagsTrueIfChanged(G910cooldownZone2, offset) then
+				self:sendMessageFixingAnyOverlaps(G910cooldownZone2, "!B")
 			end
-			if scanCooldownFlagsTrueIfChanged(G910cooldownZone3, 0) then
-				sendMessageFixingAnyOverlaps(G910cooldownZone3, "!G")
+			if self:scanCooldownFlagsTrueIfChanged(G910cooldownZone3, 0) then
+				self:sendMessageFixingAnyOverlaps(G910cooldownZone3, "!G")
 			end
-			if scanCooldownFlagsTrueIfChanged(G910cooldownZone4, 0) then
-				sendMessageFixingAnyOverlaps(G910cooldownZone4, "!M")
+			if self:scanCooldownFlagsTrueIfChanged(G910cooldownZone4, 0) then
+				self:sendMessageFixingAnyOverlaps(G910cooldownZone4, "!M")
 			end
-			if scanCooldownFlagsTrueIfChanged(G910cooldownZone5, 0) then
-				sendMessageFixingAnyOverlaps(G910cooldownZone5, "!C")
+			if self:scanCooldownFlagsTrueIfChanged(G910cooldownZone5, 0) then
+				self:sendMessageFixingAnyOverlaps(G910cooldownZone5, "!C")
 			end
 		end
 	end
 end
 
 
-function sendMessageFixingAnyOverlaps(cooldownZone, zonePrefix)		-- v2.2 add: makes things better for my rogue
-	local newMsg = zonePrefix .. buildCooldownChar(cooldownZone)
+function G910xmit:sendMessageFixingAnyOverlaps(cooldownZone, zonePrefix)		-- v2.2 add: makes things better for my rogue
+	local newMsg = zonePrefix .. self:buildCooldownChar(cooldownZone)
 	local foundAt = string.find(G910pendingMessage, zonePrefix)  	--does the existing message queue contain a related message?
 	if foundAt ~= nil then
 		local existingByte = string.byte(G910pendingMessage, foundAt+2)		
@@ -752,30 +755,30 @@ function sendMessageFixingAnyOverlaps(cooldownZone, zonePrefix)		-- v2.2 add: ma
 			--print(">>> replaced existing message of type "..zonePrefix.." in queue")
 		end
 	else
-		G910SendMessage(newMsg)
+		self:sendMessage(newMsg)
 	end	
 end
 
 
-function resetTheCooldowns()		-- complete rewrite (again) for 2.0
+function G910xmit:resetTheCooldowns()		-- complete rewrite (again) for 2.0
 	local msg
-	local offset = determineBarOffset()
-	setCooldownFlags(G910cooldownZone1, offset)
-	setCooldownFlags(G910cooldownZone2, offset)
-	setCooldownFlags(G910cooldownZone3, 0)
-	setCooldownFlags(G910cooldownZone4, 0)
-	setCooldownFlags(G910cooldownZone5, 0)
+	local offset = self:determineBarOffset()
+	self:setCooldownFlags(G910cooldownZone1, offset)
+	self:setCooldownFlags(G910cooldownZone2, offset)
+	self:setCooldownFlags(G910cooldownZone3, 0)
+	self:setCooldownFlags(G910cooldownZone4, 0)
+	self:setCooldownFlags(G910cooldownZone5, 0)
 	msg = "c"		-- tells app to suppress flashing for next 5 messages 
-	msg = msg .. "!R" .. buildCooldownChar(G910cooldownZone1)
-	msg = msg .. "!B" .. buildCooldownChar(G910cooldownZone2)
-	msg = msg .. "!G" .. buildCooldownChar(G910cooldownZone3)
-	msg = msg .. "!M" .. buildCooldownChar(G910cooldownZone4)
-	msg = msg .. "!C" .. buildCooldownChar(G910cooldownZone5)
-	G910SendMessage(msg)
+	msg = msg .. "!R" .. self:buildCooldownChar(G910cooldownZone1)
+	msg = msg .. "!B" .. self:buildCooldownChar(G910cooldownZone2)
+	msg = msg .. "!G" .. self:buildCooldownChar(G910cooldownZone3)
+	msg = msg .. "!M" .. self:buildCooldownChar(G910cooldownZone4)
+	msg = msg .. "!C" .. self:buildCooldownChar(G910cooldownZone5)
+	self:sendMessage(msg)
 end
 
 
-function shouldTheCooldownsBeSuspended()
+function G910xmit:shouldTheCooldownsBeSuspended()
 	local suspendThem = false
 	if ( G910playerOutOfControlEvent or
 	     UnitOnTaxi("player") or
@@ -790,7 +793,7 @@ function shouldTheCooldownsBeSuspended()
 end
 
 
-function setCooldownFlags(cooldownZone, offset)
+function G910xmit:setCooldownFlags(cooldownZone, offset)
 	for i = 1,6 do
 		_,hasCooldown,_ = GetActionCooldown(cooldownZone[i]+offset)
 		if IsUsableAction(cooldownZone[i]+offset) and hasCooldown < 1.6 then
@@ -803,7 +806,7 @@ function setCooldownFlags(cooldownZone, offset)
 end
 
 
-function scanCooldownFlagsTrueIfChanged(cooldownZone, offset)
+function G910xmit:scanCooldownFlagsTrueIfChanged(cooldownZone, offset)
 	--print("scanCooldownFlagsTrueIfChanged  offset "..offset)
 	local changed = false
 	for i = 1,6 do
@@ -825,7 +828,7 @@ function scanCooldownFlagsTrueIfChanged(cooldownZone, offset)
 end
 
 
-function buildCooldownChar(cooldownZone)
+function G910xmit:buildCooldownChar(cooldownZone)
 	local byte
 	byte =        G910cooldownMark[cooldownZone[1]]*64 + G910cooldownMark[cooldownZone[2]]*32 + G910cooldownMark[cooldownZone[3]]*16
 	byte = byte + G910cooldownMark[cooldownZone[4]]*8  + G910cooldownMark[cooldownZone[5]]*4  + G910cooldownMark[cooldownZone[6]]*2  +  1
@@ -833,7 +836,7 @@ function buildCooldownChar(cooldownZone)
 end
 
 
-function determineBarOffset()
+function G910xmit:determineBarOffset()
 	local offset = 0
 	local barOffset = GetBonusBarOffset()
 	if barOffset > 0 then
@@ -845,12 +848,12 @@ end
 
 --------------------------  PROFILE MEMORY RESTORE ------------------------
 
-function applyRememberedProfile()
+function G910xmit:applyRememberedProfile()
 	local playerName = GetUnitName("player", true)
 	local specNow = GetSpecialization()
 	local nameAndSpec = playerName .. tostring(specNow)
 	local newProfile = G910ProfileMemory[nameAndSpec]	-- will be nil if this table index does not exist
 	if newProfile and newProfile > 0 and newProfile < 10 then
-		G910SendMessage(tostring(newProfile))
+		self:sendMessage(tostring(newProfile))
 	end
 end
