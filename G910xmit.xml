@@ -3,17 +3,17 @@
 
 <Script file="G910xmit.lua"/>
 
-<Frame name="G910xmit" enableMouse="false" hidden="false" frameStrata="TOOLTIP">
+<Frame name="G910xmitFrame" enableMouse="false" hidden="false" frameStrata="TOOLTIP">
 			<!-- do not parent="UIParent" so my frame remains while interface is hidden, and does not scale up/down with UI --> 
 	<Scripts>
 		<OnLoad>
-			G910xmit_OnLoad(self)
+			G910xmit:OnLoad()
 		</OnLoad>
 		<OnEvent>
-			G910xmit_OnEvent(self, event, ...)
+			G910xmit:OnEvent(event, ...)
 		</OnEvent>
 		<OnUpdate>
-			G910xmit_OnUpdate(self, elapsed)
+			G910xmit:OnUpdate(elapsed)
 		</OnUpdate>
 	</Scripts>
 
