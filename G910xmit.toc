@@ -1,7 +1,7 @@
 ## Interface: 80200
-## Title: G910xmit v2.4 Dev-instrumented Azerite
-## Version: 2.4 Dev-instrumented Azerite
-## Notes: Pairs with the WoW G910 application for Mac and PC to synchronize Logitech LED keyboard lights with in-game events.
+## Title: G910xmit v2.5
+## Version: 2.4
+## Notes: Pairs with |c00FFFFWoW G910|r for macOS and Windows to synchronize Logitech LED keyboard lights with in-game events.
 ## SavedVariables: G910SuppressCooldowns, G910UserTimeFactor, G910ProfileMemory
 ## Author: waldokind@jdsoftcode.net
 ## X-Website: http://www.jdsoftcode.net
