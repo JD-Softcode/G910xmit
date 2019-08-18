@@ -114,12 +114,20 @@ G910cooldownMark = {}					-- know what's been flagged as on cooldown so won't se
 
 G910healthCodes = {"z", "y", "x", "w"}	--  used to send player health for combat light timing (2.0)
 
+G910colorToTexture = {	R = "01",		-- used by putMsgOnPixels (new in 2.5)
+						G = "02",
+						B = "04",
+						M = "05",
+						C = "06" }
+
+
 --G910SuppressCooldowns 				--  saved variable in the .toc (applies across all characters on the same realm)
 --G910UserTimeFactor = 15				--  saved variable in the .toc
 --G910ProfileMemory{}						--  saved variable in the .toc
 
 
 -------------------------- THE SLASH COMMANDS EXECUTE CODE HERE ------------------------
+-- N.B. "self:" is not valid here
 
 SlashCmdList["G910CAL"] = function(msg, theEditFrame)		--  /G910calibrate
 	ChatFrame1:AddMessage( "G910xmit is in calibration mode for the next 30 seconds.")
@@ -150,13 +158,14 @@ SlashCmdList["G910RESET"] = function(msg, theEditFrame)		--  /G910reset    Reset
 	G910playerOutOfControlEvent = false
 	G910playerInCombat = false
 	G910loadingScreenActive = false
+	C_Timer.After(1.0, function() G910xmit:applyRememberedProfile() end)
 end
 
 SlashCmdList["G910CDRESET"] = function(msg, theEditFrame)		--  /G910cdreset    Send full set of action bar status msgs
 	if G910SuppressCooldowns then
 		ChatFrame1:AddMessage( "G910xmit is set to ignore action bar updates. Type \"/G910actionbars on\" to enable.")
 	else
-		ChatFrame1:AddMessage( "G910xmit: Resetting all keyboard lights for action bars.")
+		ChatFrame1:AddMessage( "G910xmit: Resetting all action bars keyboard lights.")
 		G910suspendCooldownUpdate = true
 		G910xmit:resetTheCooldowns()
 		C_Timer.After(5.0, function() G910suspendCooldownUpdate = false end)
@@ -450,9 +459,9 @@ function G910xmit:OnEvent(event, ...)
         --print("ACTIVE_TALENT_GROUP_CHANGED "..arg1.."  "..arg2)
         if (arg2==0) then                           -- arg2 == 0 only upon initial character login to the game world
             G910suspendCooldownUpdate = true						-- pause automatic updating
-            C_Timer.After(2.0, function() self:resetTheCooldowns() end)                   -- full, no-blink update after things settle down, else all show not ready
-            C_Timer.After(4.0, function() self:resetTheCooldowns() end)                   -- swapping characters was not updating everything on just 1 call
             C_Timer.After(1.0, function() self:applyRememberedProfile() end)
+            C_Timer.After(2.0, function() self:resetTheCooldowns() end)                   -- full, no-blink update after things settle down, else all show not ready
+            C_Timer.After(4.5, function() self:resetTheCooldowns() end)                   -- swapping characters was not updating everything on just 1 call
             C_Timer.After(6.0, function() G910suspendCooldownUpdate = false end)
         else
             local specNow = GetSpecialization()
@@ -460,8 +469,8 @@ function G910xmit:OnEvent(event, ...)
             if specNow ~= G910oldSpecialization then        -- if the actual spec has changed and not just a talent,
             	C_Timer.After(0.01, function() self:sendMessage("T") end)       -- play the animation. Calling directly often failed due to more C_Timers immediately after
                 G910suspendCooldownUpdate = true			-- pause automatic updating
-                C_Timer.After(2.1, function() self:resetTheCooldowns() end)       -- catch some early ones right after animation to show progress
 	            C_Timer.After(1.0, function() self:applyRememberedProfile() end)
+                C_Timer.After(2.1, function() self:resetTheCooldowns() end)       -- catch some early ones right after animation to show progress
                 C_Timer.After(4.5, function() self:resetTheCooldowns() end)       -- show more progress
                 C_Timer.After(8.0, function() self:resetTheCooldowns() end)       -- certain spells take a long time to show ready
                 C_Timer.After(10.1, function() G910suspendCooldownUpdate = false end)
@@ -504,7 +513,6 @@ function G910xmit:OnEvent(event, ...)
         self:sendMessage("n")
     elseif event == "AZERITE_ITEM_EXPERIENCE_CHANGED" then      -- every time the necklace XP bar moves
         self:sendMessage("N")
-        
     elseif event == "AZERITE_ESSENCE_ACTIVATED" then	-- new ability dropped onto center of necklace
         self:sendMessage("n")
     elseif event == "AZERITE_ESSENCE_FORGE_CLOSE" then
@@ -614,21 +622,38 @@ end
 
 -------------------------- TO TAP OUT THE BITS ------------------------
 
+--G910colorToTexture = {	["R"] = "01",
+--						["G"] = "02",
+--						["B"] = "04",
+--						["M"] = "05",
+--						["C"] = "06" }
+
+--G910colorToTexture = {	R = "01",
+--						G = "02",
+--						B = "04",
+--						M = "05",
+--						C = "06" }
+
+
 function G910xmit:putMsgOnPixels(msg,color)		-- color is nil when this is called with just self:putMsgOnPixels(msg)
 	--ChatFrame1:AddMessage("putting "..msg.." on the color pixels using color "..tostring(color))
 	local bitmask = 1
 	local texture = "07"			-- use white pixels when color is nil
-	if color     == "R" then 
-		texture = "01" 
-	elseif color == "G" then 
-		texture = "02" 
-	elseif color == "B" then 
-		texture = "04" 
-	elseif color == "M" then 
-		texture = "05" 
-	elseif color == "C" then 
-		texture = "06" 
+	
+	if G910colorToTexture[color] then
+		texture = G910colorToTexture[color] 
 	end
+--	if color     == "R" then 
+--		texture = "01" 
+--	elseif color == "G" then 
+--		texture = "02" 
+--	elseif color == "B" then 
+--		texture = "04" 
+--	elseif color == "M" then 
+--		texture = "05" 
+--	elseif color == "C" then 
+--		texture = "06" 
+--	end
 	local theCode = string.byte(msg)
 	--print("analyzing byte" .. theCode)
 	for i = 1,7 do
@@ -684,15 +709,21 @@ end
 
 
 function G910xmit:healthQuartile(testVal)
-	if testVal < 0.26 then 
-		return 1
-	elseif testVal < 0.51 then 
-		return 2
-	elseif testVal < 0.76 then 
-		return 3
+	if testVal < 1 then
+		return 1 + math.floor(testVal * 4)
 	else
 		return 4
 	end
+
+--	if testVal < 0.26 then 
+--		return 1
+--	elseif testVal < 0.51 then 
+--		return 2
+--	elseif testVal < 0.76 then 
+--		return 3
+--	else
+--		return 4
+--	end
 end
 
 --------------------------  TO TRACK AND UPDATE ACTION BARS ------------------------
