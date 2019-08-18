@@ -119,15 +119,13 @@ G910colorToTexture = {	R = "01",		-- used by putMsgOnPixels (new in 2.5)
 						B = "04",
 						M = "05",
 						C = "06" }
-
-
 --G910SuppressCooldowns 				--  saved variable in the .toc (applies across all characters on the same realm)
 --G910UserTimeFactor = 15				--  saved variable in the .toc
---G910ProfileMemory{}						--  saved variable in the .toc
+--G910ProfileMemory{}					--  saved variable in the .toc
 
 
 -------------------------- THE SLASH COMMANDS EXECUTE CODE HERE ------------------------
--- N.B. "self:" is not valid here
+-- N.B. "self:" is not valid in slash command invokes; use G910xmit:
 
 SlashCmdList["G910CAL"] = function(msg, theEditFrame)		--  /G910calibrate
 	ChatFrame1:AddMessage( "G910xmit is in calibration mode for the next 30 seconds.")
@@ -498,7 +496,7 @@ function G910xmit:OnEvent(event, ...)
     elseif event == "ARTIFACT_UPDATE" then          -- added in 1.6
         if C_ArtifactUI.IsAtForge() then        -- Only if player is currently at the forge...
             if G910isAtForge then               -- if this update is happening while the forge is open
-		-- Code Removed; since WoW 8.0, Legion artifact weapons cannot be upgraded
+				-- Code Removed; since WoW 8.0, Legion artifact weapons cannot be upgraded
             else                                -- if we were not previously at the forge, play opening forge animation
                 self:sendMessage("F")
                 G910isAtForge = true
@@ -513,13 +511,13 @@ function G910xmit:OnEvent(event, ...)
         self:sendMessage("n")
     elseif event == "AZERITE_ITEM_EXPERIENCE_CHANGED" then      -- every time the necklace XP bar moves
         self:sendMessage("N")
-    elseif event == "AZERITE_ESSENCE_ACTIVATED" then	-- new ability dropped onto center of necklace
+    elseif event == "AZERITE_ESSENCE_ACTIVATED" then			-- new ability dropped onto center of necklace
         self:sendMessage("n")
     elseif event == "AZERITE_ESSENCE_FORGE_CLOSE" then
         self:sendMessage("f")
     elseif event == "AZERITE_ESSENCE_FORGE_OPEN" then
         self:sendMessage("F")        
-    elseif event == "AZERITE_ESSENCE_CHANGED" then		-- new ability added to list from item in inventory
+    elseif event == "AZERITE_ESSENCE_CHANGED" then				-- new ability added to list from item in inventory
         self:sendMessage("a")        
     end
 end
@@ -622,38 +620,13 @@ end
 
 -------------------------- TO TAP OUT THE BITS ------------------------
 
---G910colorToTexture = {	["R"] = "01",
---						["G"] = "02",
---						["B"] = "04",
---						["M"] = "05",
---						["C"] = "06" }
-
---G910colorToTexture = {	R = "01",
---						G = "02",
---						B = "04",
---						M = "05",
---						C = "06" }
-
-
 function G910xmit:putMsgOnPixels(msg,color)		-- color is nil when this is called with just self:putMsgOnPixels(msg)
 	--ChatFrame1:AddMessage("putting "..msg.." on the color pixels using color "..tostring(color))
 	local bitmask = 1
 	local texture = "07"			-- use white pixels when color is nil
-	
 	if G910colorToTexture[color] then
 		texture = G910colorToTexture[color] 
 	end
---	if color     == "R" then 
---		texture = "01" 
---	elseif color == "G" then 
---		texture = "02" 
---	elseif color == "B" then 
---		texture = "04" 
---	elseif color == "M" then 
---		texture = "05" 
---	elseif color == "C" then 
---		texture = "06" 
---	end
 	local theCode = string.byte(msg)
 	--print("analyzing byte" .. theCode)
 	for i = 1,7 do
@@ -710,20 +683,10 @@ end
 
 function G910xmit:healthQuartile(testVal)
 	if testVal < 1 then
-		return 1 + math.floor(testVal * 4)
+		return 1 + math.floor(testVal * 4)		-- 0-0.24 is 1;  0.24-0.49 is 2;  etc.
 	else
 		return 4
 	end
-
---	if testVal < 0.26 then 
---		return 1
---	elseif testVal < 0.51 then 
---		return 2
---	elseif testVal < 0.76 then 
---		return 3
---	else
---		return 4
---	end
 end
 
 --------------------------  TO TRACK AND UPDATE ACTION BARS ------------------------
