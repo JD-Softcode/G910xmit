@@ -183,7 +183,7 @@ SlashCmdList["G910PROFILESWAP"] = function(msg, theEditFrame)	--  LEGACY /G910pr
 end
 
 SlashCmdList["G910PROFILE"] = function(msg, theEditFrame)		--  /G910profile X     Switch to lighting profile X
-	if msg and tonumber(msg) then							-- is a number,
+	if msg and tonumber(msg) then							-- if a number,
 		local profileNum = math.floor(tonumber(msg))
 		if (profileNum > 0 and profileNum < 10) then		--        and in the valid range
 			G910xmit:sendMessage(tostring(profileNum))
@@ -261,7 +261,7 @@ end
 function G910xmit:showHelp(name)											-- added in 1.15
 	ChatFrame1:AddMessage ("|cffffff00HELP for WoW G"..name.." and G910xmit.|cff00ff66 Find more at |rwww.jdsoftcode.net/warcraft")
 	ChatFrame1:AddMessage ("|cff00ff66  Type |r/g"..name.."r|cff00ff66 to reset stuck animations.")
-	ChatFrame1:AddMessage ("|cff00ff66  Type |r/g"..name.."cdr|cff00ff66 to reset and resync the cooldown lights.")
+	ChatFrame1:AddMessage ("|cff00ff66  Type |r/g"..name.."cdr|cff00ff66 to reset and resync the action bar ready lights.")
 	ChatFrame1:AddMessage ("|cff00ff66  Type |r/g"..name.."profile #|cff00ff66 to change lighting colors.")
 	ChatFrame1:AddMessage ("|cff00ff66  Type |r/g"..name.."rememberprofile #|cff00ff66 to always use profile # on this character & spec.")
 	ChatFrame1:AddMessage ("|cff00ff66  Type |r/g"..name.."time|cff00ff66 to adjust messaging rate.")
