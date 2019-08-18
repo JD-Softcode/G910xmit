@@ -116,7 +116,7 @@ G910healthCodes = {"z", "y", "x", "w"}	--  used to send player health for combat
 
 --G910SuppressCooldowns 				--  saved variable in the .toc (applies across all characters on the same realm)
 --G910UserTimeFactor = 15				--  saved variable in the .toc
---G910ProfileMemory						--  saved variable in the .toc
+--G910ProfileMemory{}						--  saved variable in the .toc
 
 
 -------------------------- THE SLASH COMMANDS EXECUTE CODE HERE ------------------------
@@ -321,9 +321,10 @@ function G910xmit:OnLoad()
 	f:RegisterEvent("AZERITE_ITEM_EXPERIENCE_CHANGED")		--new for WoW 8.0; add in AddOn 2.0
 	f:RegisterEvent("AZERITE_ITEM_POWER_LEVEL_CHANGED")		--new for WoW 8.0; add in AddOn 2.0
 	
-	frame:RegisterEvent("AZERITE_ESSENCE_ACTIVATED")			--new for WoW 8.2
-	frame:RegisterEvent("AZERITE_ESSENCE_FORGE_CLOSE")			--new for WoW 8.2
-	frame:RegisterEvent("AZERITE_ESSENCE_FORGE_OPEN")			--new for WoW 8.2
+	f:RegisterEvent("AZERITE_ESSENCE_ACTIVATED")			--new for WoW 8.2
+	f:RegisterEvent("AZERITE_ESSENCE_FORGE_CLOSE")			--new for WoW 8.2
+	f:RegisterEvent("AZERITE_ESSENCE_FORGE_OPEN")			--new for WoW 8.2
+	f:RegisterEvent("AZERITE_ESSENCE_CHANGED")				--new for WoW 8.2
 		
 	f:RegisterEvent("LOADING_SCREEN_ENABLED")		--add in AddOn 2.0
 	f:RegisterEvent("LOADING_SCREEN_DISABLED")		--add in AddOn 2.0
@@ -449,9 +450,9 @@ function G910xmit:OnEvent(event, ...)
         --print("ACTIVE_TALENT_GROUP_CHANGED "..arg1.."  "..arg2)
         if (arg2==0) then                           -- arg2 == 0 only upon initial character login to the game world
             G910suspendCooldownUpdate = true						-- pause automatic updating
-            C_Timer.After(2.0, self:resetTheCooldowns())                   -- full, no-blink update after things settle down, else all show not ready
-            C_Timer.After(4.0, self:resetTheCooldowns())                   -- swapping characters was not updating everything on just 1 call
-            C_Timer.After(1.0, self:applyRememberedProfile())
+            C_Timer.After(2.0, function() self:resetTheCooldowns() end)                   -- full, no-blink update after things settle down, else all show not ready
+            C_Timer.After(4.0, function() self:resetTheCooldowns() end)                   -- swapping characters was not updating everything on just 1 call
+            C_Timer.After(1.0, function() self:applyRememberedProfile() end)
             C_Timer.After(6.0, function() G910suspendCooldownUpdate = false end)
         else
             local specNow = GetSpecialization()
@@ -459,10 +460,10 @@ function G910xmit:OnEvent(event, ...)
             if specNow ~= G910oldSpecialization then        -- if the actual spec has changed and not just a talent,
             	C_Timer.After(0.01, function() self:sendMessage("T") end)       -- play the animation. Calling directly often failed due to more C_Timers immediately after
                 G910suspendCooldownUpdate = true			-- pause automatic updating
-                C_Timer.After(2.1, self:resetTheCooldowns())       -- catch some early ones right after animation to show progress
-	            C_Timer.After(1.0, self:applyRememberedProfile())
-                C_Timer.After(4.5, self:resetTheCooldowns())       -- show more progress
-                C_Timer.After(8.0, self:resetTheCooldowns())       -- certain spells take a long time to show ready
+                C_Timer.After(2.1, function() self:resetTheCooldowns() end)       -- catch some early ones right after animation to show progress
+	            C_Timer.After(1.0, function() self:applyRememberedProfile() end)
+                C_Timer.After(4.5, function() self:resetTheCooldowns() end)       -- show more progress
+                C_Timer.After(8.0, function() self:resetTheCooldowns() end)       -- certain spells take a long time to show ready
                 C_Timer.After(10.1, function() G910suspendCooldownUpdate = false end)
     	        G910oldSpecialization = specNow
             end
@@ -505,11 +506,13 @@ function G910xmit:OnEvent(event, ...)
         self:sendMessage("N")
         
     elseif event == "AZERITE_ESSENCE_ACTIVATED" then	-- new ability dropped onto center of necklace
-        G910SendMessage("n")
+        self:sendMessage("n")
     elseif event == "AZERITE_ESSENCE_FORGE_CLOSE" then
-        G910SendMessage("f")
+        self:sendMessage("f")
     elseif event == "AZERITE_ESSENCE_FORGE_OPEN" then
-        G910SendMessage("F")        
+        self:sendMessage("F")        
+    elseif event == "AZERITE_ESSENCE_CHANGED" then		-- new ability added to list from item in inventory
+        self:sendMessage("a")        
     end
 end
 
