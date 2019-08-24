@@ -1,5 +1,5 @@
 # G910xmit
-World of Warcraft AddOn code for use with WoW G910 application
+World of Warcraft AddOn code for use with WoW G910 application. For the WoW Classic version, look here: https://github.com/JD-Softcode/G910xmit-Classic
 
 Download the application for macOS or Windows at www.jdsoftcode.net.
 
