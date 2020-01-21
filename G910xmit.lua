@@ -84,6 +84,32 @@ SLASH_G910TIME6		   = "/G512time"
 SLASH_G910PROFILE6     = "/G512profile"
 SLASH_G910REMEMBER6	   = "/G512rememberprofile"
 
+SLASH_G910CAL8         = "/G815cal"
+SLASH_G910RESET8       = "/G815r"
+SLASH_G910CDRESET8     = "/G815cdr"
+SLASH_G910PROFILE17    = "/G815profile1"	
+SLASH_G910PROFILE27    = "/G815profile2"	
+SLASH_G910PROFILESWAP7 = "/G815profileswap"	
+SLASH_G910ACTIONBARS7  = "/G815actionbars"	
+SLASH_G910HELP881  	   = "/G815"		
+SLASH_G910HELP882  	   = "/G815help"	
+SLASH_G910TIME7		   = "/G815time"
+SLASH_G910PROFILE7     = "/G815profile"
+SLASH_G910REMEMBER7	   = "/G815rememberprofile"
+
+SLASH_G910CAL9         = "/G915cal"
+SLASH_G910RESET9       = "/G915r"
+SLASH_G910CDRESET9     = "/G915cdr"
+SLASH_G910PROFILE18    = "/G915profile1"	
+SLASH_G910PROFILE28    = "/G915profile2"	
+SLASH_G910PROFILESWAP8 = "/G915profileswap"	
+SLASH_G910ACTIONBARS8  = "/G915actionbars"	
+SLASH_G910HELP991  	   = "/G915"		
+SLASH_G910HELP992  	   = "/G915help"	
+SLASH_G910TIME8		   = "/G915time"
+SLASH_G910PROFILE8     = "/G915profile"
+SLASH_G910REMEMBER8	   = "/G915rememberprofile"
+
 
 -------------------------- ADD-ON GLOBALS ------------------------
 
@@ -208,8 +234,22 @@ SlashCmdList["G910REMEMBER"] = function(msg, theEditFrame)	--   /G910rememberpro
 		else
 			ChatFrame1:AddMessage( "G910xmit: Type \"/G910rememberprofile x\" where x is a number between 1 and 9.")
 		end
-	else
-			ChatFrame1:AddMessage( "G910xmit: Type \"/G910rememberprofile x\" where x is a number between 1 and 9.")
+	else		-- if the command is used without a numeric argument, show memorized table
+		if G910ProfileMemory == nil then
+			ChatFrame1:AddMessage( "G910xmit: No lighting profiles memorized.\nTo add, type \"/G910rememberprofile x\" where x is a number between 1 and 9.")
+		else
+			ChatFrame1:AddMessage( "WoW G910 memorized lighting profiles:")
+			--table.sort( G910ProfileMemory ) does not work
+			local arrayCopyForSort = {}
+			for characterDescriptor, profileNum in pairs(G910ProfileMemory) do
+				--ChatFrame1:AddMessage( "   Profile "..profileNum.." used for Name/Spec #: "..characterDescriptor)
+				table.insert(arrayCopyForSort, {name = characterDescriptor, theProfile = profileNum } )
+			end
+			table.sort(arrayCopyForSort, function(a,b) return a.name < b.name end)  -- sort by name from A to Z
+			for i = 1,#arrayCopyForSort do
+				ChatFrame1:AddMessage( "   Profile "..arrayCopyForSort[i].theProfile.." used for name/spec num: "..arrayCopyForSort[i].name)	
+			end
+		end
 	end
 end
 
@@ -258,6 +298,14 @@ SlashCmdList["G910HELP55"] = function(msg, theEditFrame)			-- in-game AddOn help
 	G910xmit:showHelp("512")
 end
 
+SlashCmdList["G910HELP88"] = function(msg, theEditFrame)			-- in-game AddOn help
+	G910xmit:showHelp("815")
+end
+
+SlashCmdList["G910HELP99"] = function(msg, theEditFrame)			-- in-game AddOn help
+	G910xmit:showHelp("915")
+end
+
 function G910xmit:showHelp(name)											-- added in 1.15
 	ChatFrame1:AddMessage ("|cffffff00HELP for WoW G"..name.." and G910xmit.|cff00ff66 Find more at |rwww.jdsoftcode.net/warcraft")
 	ChatFrame1:AddMessage ("|cff00ff66  Type |r/g"..name.."r|cff00ff66 to reset stuck animations.")
@@ -299,6 +347,7 @@ function G910xmit:OnLoad()
 	f:RegisterEvent("PLAY_MOVIE")				-- fires for pre-rendered movies but has no "done with movie" call
 	
 	f:RegisterEvent("PLAYER_MONEY") 			-- player gains or loses money
+	f:RegisterEvent("NEW_TOY_ADDED")
 
 	f:RegisterEvent("ACHIEVEMENT_EARNED")
 	f:RegisterEvent("PLAYER_LEVEL_UP")
@@ -314,7 +363,7 @@ function G910xmit:OnLoad()
 	f:RegisterEvent("CHAT_MSG_BN_WHISPER_INFORM")-- Fires everytime you send a whisper though Battle.net
 	f:RegisterEvent("PLAYER_STARTED_MOVING")	-- started forward/backward/strafe. Not jumping, turning, or taking a taxi.
 	
-	f:RegisterEvent("READY_CHECK")				-- ready check is triggered.
+	f:RegisterEvent("READY_CHECK")				-- ready check is triggered.	
 	f:RegisterEvent("ROLE_POLL_BEGIN")			-- role check is triggered.   v2.0 add
 	--f:RegisterEvent("CHAT_MSG_RAID_WARNING")	-- raid leader raid warning received // no, this will often come at bad times for animation
 	f:RegisterEvent("DUEL_REQUESTED")			-- these next 5 added in 1.6
@@ -404,6 +453,8 @@ function G910xmit:OnEvent(event, ...)
 				-- after 5 seconds, send it again (1.14 add, out in 2.0, back in on 2.1)
     elseif event == "TRANSMOGRIFY_SUCCESS" then     -- added in 1.6
         self:searchAndDestroy("J")                       -- added in 1.8 to stop multiple plays (one sent for each item xmogged)
+        self:sendMessage("J")
+    elseif event == "NEW_TOY_ADDED" then
         self:sendMessage("J")
     elseif event == "PLAYER_MONEY" then
         local moneyGain = GetMoney() - G910wasMoney
