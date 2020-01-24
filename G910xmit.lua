@@ -1,4 +1,4 @@
-﻿--   ## WoW G910 XMIT - ©2016-19 J∆•Softcode (www.jdsoftcode.net) ##
+﻿--   ## WoW G910 XMIT - ©2016-20 J∆•Softcode (www.jdsoftcode.net) ##
 
 -------------------------- DEFINE USER SLASH COMMANDS ------------------------
 
