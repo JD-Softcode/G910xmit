@@ -131,6 +131,8 @@ G910cooldownUpdateTimer = 0.0			--	heartbeat for the cooldowns
 G910updateCooldownsInterval = 1.0		--  many seconds between cooldown updates  
 G910healthUpdateTimer = 0.0				--  heartbeat for the combat health updates
 G910XmitMinTransmitDelay = 0.20			--  delay between each transmit phase (sec) / based on saved variable
+G910needAutomaticReset = false			--  used when detecting missing textures to force an automatic reset
+G910automaticResetTime = 0.0			--     used with with the above
 G910cooldownZone1 = { 1, 2, 3, 4, 5, 6} --  which action slots are in what messaging zone (zones 1 & 2 get offset for stances/stealth)
 G910cooldownZone2 = { 7, 8, 9,10,11,12}
 G910cooldownZone3 = {61,62,63,64,65,66}
@@ -189,7 +191,7 @@ SlashCmdList["G910CDRESET"] = function(msg, theEditFrame)		--  /G910cdreset    S
 	if G910SuppressCooldowns then
 		ChatFrame1:AddMessage( "G910xmit is set to ignore action bar updates. Type \"/G910actionbars on\" to enable.")
 	else
-		ChatFrame1:AddMessage( "G910xmit: Resetting all action bars keyboard lights.")
+		ChatFrame1:AddMessage( "G910xmit: Doing full re-sync of action bar keyboard lights.")
 		G910suspendCooldownUpdate = true
 		G910xmit:resetTheCooldowns()
 		C_Timer.After(5.0, function() G910suspendCooldownUpdate = false end)
@@ -639,6 +641,30 @@ function G910xmit:OnUpdate(elapsed)
 		self:checkAndSendHealthPulseRateUpdate()
 		G910healthUpdateTimer = now + 2.0			-- update health pulsing every 2 seconds
 	end
+	-- Periodically do automatic reset if missing textures detected
+	if (G910needAutomaticReset) then
+		if G910automaticResetTime == 0.0 then
+			G910automaticResetTime = GetTime() + 15.0	-- collect up to 15 seconds of missed textures then fire reset
+			print("G910xmit: Sorry, WoW couldn't send every message; will resync in 15 seconds.")
+		elseif GetTime() > G910automaticResetTime then
+			ChatFrame1:AddMessage( "G910xmit re-synching...")
+			G910pendingMessage = ""				--reset the message system
+			G910XmitPhase = 1
+			G910xmit:sendMessage("R")
+			G910whisperLight = false
+			G910playerOutOfControlEvent = false
+			G910playerInCombat = false
+			G910loadingScreenActive = false
+			C_Timer.After(0.1, function() G910xmit:applyRememberedProfile() end)
+			if not G910SuppressCooldowns then
+				G910suspendCooldownUpdate = true
+				C_Timer.After(0.5, function() G910xmit:resetTheCooldowns() end)
+				C_Timer.After(5.0, function() G910suspendCooldownUpdate = false end)
+			end
+			G910needAutomaticReset = false
+			G910automaticResetTime = 0.0
+		end
+	end
 end
 
 
@@ -678,11 +704,14 @@ function G910xmit:putMsgOnPixels(msg,color)		-- color is nil when this is called
 	if G910colorToTexture[color] then
 		texture = G910colorToTexture[color] 
 	end
-	local theCode = string.byte(msg)
+	local theCode = string.byte(msg)	
 	--print("analyzing byte" .. theCode)
 	for i = 1,7 do
 		if bit.band(theCode,bitmask) > 0 then		-- uses C library that Blizzard included
 			_G["G910xmitFrameD"..i.."Texture"]:SetTexture("Interface\\AddOns\\G910xmit\\"..texture)
+			if not _G["G910xmitFrameD"..i.."Texture"]:IsObjectLoaded() then
+				G910needAutomaticReset = true
+			end
 		else
 			_G["G910xmitFrameD"..i.."Texture"]:SetTexture("Interface\\AddOns\\G910xmit\\00")
 		end	
@@ -712,10 +741,13 @@ function G910xmit:guardPixels(state)
 	else
 		G910xmitFrameR2Texture:SetTexture("Interface\\AddOns\\G910xmit\\07")
 		G910xmitFrameL2Texture:SetTexture("Interface\\AddOns\\G910xmit\\01")
+		if not ( G910xmitFrameR2Texture:IsObjectLoaded() and G910xmitFrameL2Texture:IsObjectLoaded() ) then
+			G910needAutomaticReset = true
+		end
 	end	
 end
-	
-	
+
+
 function G910xmit:setupGuardPixels()		
 	G910xmitFrameR1Texture:SetTexture("Interface\\AddOns\\G910xmit\\07")
 	G910xmitFrameL1Texture:SetTexture("Interface\\AddOns\\G910xmit\\01")
