@@ -76,7 +76,6 @@ G910colorToTexture = {	R = "01",		-- used by putMsgOnPixels (new in 2.5)
 						C = "06" }
 G910texturePath = "Interface\\AddOns\\G910xmit\\"
 G910WoWClassic = select(4, GetBuildInfo()) < 20000
-G910WoWShadow  = select(4, GetBuildInfo()) > 89999
 --G910SuppressCooldowns 				--  saved variable in the .toc (applies across all characters on the same realm)
 --G910UserTimeFactor = 15				--  saved variable in the .toc
 --G910ProfileMemory{}					--  saved variable in the .toc
@@ -293,9 +292,7 @@ function G910xmit:OnLoad()
 		f:RegisterEvent("AZERITE_ESSENCE_FORGE_CLOSE")			--new for WoW 8.2
 		f:RegisterEvent("AZERITE_ESSENCE_FORGE_OPEN")			--new for WoW 8.2
 		f:RegisterEvent("AZERITE_ESSENCE_CHANGED")				--new for WoW 8.2
-	end
-		
-	if G910WoWShadow then
+
 		f:RegisterEvent("ZONE_CHANGED_NEW_AREA")					-- check to see if we're in In Between
 		f:RegisterEvent("COVENANT_SANCTUM_INTERACTION_STARTED")		-- opening "Sanctum Upgrades" vendor/window. (transit network, anima conductor, adventures, custom). Uses 5 currencies
 		f:RegisterEvent("COVENANT_SANCTUM_INTERACTION_ENDED")		-- closing "sanctum Upgrades" vendor/window. fires 2x each time.
@@ -333,12 +330,10 @@ function G910xmit:OnEvent(event, ...)
         	G910unspentTalentPoints = UnitCharacterPoints("player")
         else
 			G910oldSpecialization = GetSpecialization()
-        end
-		G910isAtForge = false
-        if G910WoWShadow then
 	        _, G910wasAnima = C_CurrencyInfo.GetCurrencyInfo(1813)
 	        if G910wasAnima == nil then G910wasAnima = 0 end
         end
+		G910isAtForge = false
         C_Timer.After(1.5, function() self:sendMessage("e") end) -- send message chat field has closed
         G910chatInputOpen = false               				-- and remember it's closed
         G910oldPlayerHealthQuartile = self:healthQuartile( UnitHealth("player") / UnitHealthMax("player") )
@@ -828,20 +823,10 @@ function G910xmit:shouldTheCooldownsBeSuspended()
 	end
 	if not suspendThem and not G910WoWClassic then
 		if ( HasVehicleActionBar() or			-- added in 1.10 from Tuller and zork on the wowinterface.com forums
+			 C_LossOfControl.GetActiveLossOfControlDataCount() > 0 or	-- call changed in 9.0.1
 	         HasOverrideActionBar() ) then		-- this for Darkmoon Fair cannon & shooting gallery
 	         	suspendThem = true
 	    end
-	end
-	if not suspendThem then
-		if G910WoWShadow then
-			if C_LossOfControl.GetActiveLossOfControlDataCount() > 0 then	-- call changed in 9.0.1
-				suspendThem = true
-			end
-		else
-			if C_LossOfControl.GetNumEvents() > 0 then
-				suspendThem = true
-			end
-		end
 	end
 	return  suspendThem
 end
