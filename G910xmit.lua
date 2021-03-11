@@ -40,7 +40,9 @@ G910chatInputOpen = false				--  flag to know chat window state and if just chan
 G910whisperLight = false				--  flag to not send unnecessary stopChatLights
 G910cinematicMovieMode = false			--  flag to come out of movie mode upon moving
 G910wasMoney = 0						--  used to tell if money is coming in or going out
-G910wasAnima = 0						--  used to tell in anima is coming in
+G910wasAnima = 0						--  used to tell if reservoir anima is coming in #1813
+G910wasRedeemed = 0						--  used to tell if Redeemed souls are coming in #1810
+G910wasSoulAsh = 0						--  used to tell if Soul Ash is coming in #1828
 G910oldSpecialization = 0				--  NON-CLASSIC: used to tell if spec changed or just a talent (new for 7.0)
 G910unspentTalentPoints = 0				--  CLASSIC: used to tell when talent points spent
 G910oldPlayerHealthQuartile = 0			--  used to store and compare player health for combat light timing (2.0)
@@ -57,8 +59,9 @@ G910automaticResetTime = 0.0			--     used with with the above
 G910skipFirstResendMsg = true			--     but cut down on the spam 1st time
 G910travelingInBetween = false			--  used for repeated travel animation
 
-G910InBetweenZoneName1 = "Oribos"		-- same
-G910InBetweenZoneName2 = "The In-Between"
+G910OribosZoneNames = "Oribos Орибос"	--  All western + Russian
+G910InBetweenZoneNames = "The In-Between Der Zwischenraum La Zona Intermedia Entre-Deux O Intermédio Промежуток" 
+										--  English, German, Spanish, French, Portugues, Russian
 
 G910cooldownZone1 = { 1, 2, 3, 4, 5, 6} --  which action slots are in what messaging zone (zones 1 & 2 get offset for stances/stealth)
 G910cooldownZone2 = { 7, 8, 9,10,11,12}
@@ -330,8 +333,9 @@ function G910xmit:OnEvent(event, ...)
         	G910unspentTalentPoints = UnitCharacterPoints("player")
         else
 			G910oldSpecialization = GetSpecialization()
-	        _, G910wasAnima = C_CurrencyInfo.GetCurrencyInfo(1813)
-	        if G910wasAnima == nil then G910wasAnima = 0 end
+			G910wasAnima = C_CurrencyInfo.GetCurrencyInfo(1813)["quantity"]
+			G910wasRedeemed = C_CurrencyInfo.GetCurrencyInfo(1810)["quantity"]
+			G910wasSoulAsh = C_CurrencyInfo.GetCurrencyInfo(1828)["quantity"]
         end
 		G910isAtForge = false
         C_Timer.After(1.5, function() self:sendMessage("e") end) -- send message chat field has closed
@@ -512,14 +516,27 @@ function G910xmit:OnEvent(event, ...)
     elseif event == "COVENANT_SANCTUM_INTERACTION_STARTED" then
     	self:sendMessage("l")	-- lowercase L
     elseif event == "COVENANT_SANCTUM_INTERACTION_ENDED" or event == "RUNEFORGE_LEGENDARY_CRAFTING_CLOSED" or event == "SOULBIND_FORGE_INTERACTION_ENDED" then
-        self:searchAndDestroy("K")            -- sometimes triggered twice my game; only play once.
+        self:searchAndDestroy("K")            -- sometimes triggered twice by game; only play once.
     	self:sendMessage("K")
     elseif event == "CURRENCY_DISPLAY_UPDATE" then
-    	if ( arg2 ~= nil and arg1 ~= nil and arg1 == 1813 ) then
-			if arg2 > G910wasAnima then
-				self:sendMessage("L")
+    	if ( arg2 ~= nil and arg1 ~= nil ) then
+			if ( arg1 == 1813 ) then
+				if arg2 > G910wasAnima then
+					self:sendMessage("K") -- close pulsing animation so anima shows
+					C_Timer.After(2.0, function() self:sendMessage("L") end)
+				end
+				G910wasAnima = arg2
+			elseif ( arg1 == 1810 ) then
+				if arg2 > G910wasRedeemed then
+					self:sendMessage("L")
+				end
+				G910wasRedeemed = arg2
+			elseif ( arg1 == 1828 ) then
+				if arg2 > G910wasSoulAsh then
+					self:sendMessage("N")
+				end
+				G910wasSoulAsh = arg2
 			end
-			G910wasAnima = arg2
     	end
     else
     	print("G910xmit: Registered for but didn't handle "..event)  
@@ -906,7 +923,9 @@ end
 -------------------------  ZONE CHECK  -----------------------------
 
 function G910xmit:inAnimationZone()
-	if GetZoneText()==G910InBetweenZoneName1 or GetZoneText()==G910InBetweenZoneName2 then
+	local zone = GetZoneText()
+	zone = string.gsub(zone,"%-","%%%-")  -- string.find() uses patterns so must escape '-'
+	if string.find(G910OribosZoneNames, zone) ~= nil or string.find(G910InBetweenZoneNames, zone) ~= nil then
 		return true
 	else
 		return false
