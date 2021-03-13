@@ -522,8 +522,9 @@ function G910xmit:OnEvent(event, ...)
     	if ( arg2 ~= nil and arg1 ~= nil ) then
 			if ( arg1 == 1813 ) then
 				if arg2 > G910wasAnima then
-					self:sendMessage("K") -- close pulsing animation so anima shows
-					C_Timer.After(2.0, function() self:sendMessage("L") end)
+					self:sendMessage("-") -- silent reset to close pulsing animation so anima shows
+					C_Timer.After(0.8, function() self:sendMessage("L") end)
+					C_Timer.After(1.8, function() self:sendMessage("l") end)
 				end
 				G910wasAnima = arg2
 			elseif ( arg1 == 1810 ) then
