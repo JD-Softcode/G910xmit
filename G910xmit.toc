@@ -1,6 +1,6 @@
 ## Interface: 90005
-## Title: G910xmit v3.1
-## Version: 3.1
+## Title: G910xmit v3.2
+## Version: 3.2
 ## Notes: Pairs with |cff00ffffWoW G910|r for Mac and Windows to animate Logitech LED keyboard lights with WoW's in-game events.
 ## SavedVariables: G910SuppressCooldowns, G910UserTimeFactor, G910ProfileMemory
 ## Author: waldokind@jdsoftcode.net

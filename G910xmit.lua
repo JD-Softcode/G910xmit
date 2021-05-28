@@ -1,5 +1,5 @@
-﻿--   ## WoW G910 XMIT - ©2016-20 J∆•Softcode (www.jdsoftcode.net)		  ##
---   ##     Unified lua code for Classic, Retail to BfA, and Shadowlands  ##
+﻿--   ## WoW G910 XMIT - ©2016-21 J∆•Softcode (www.jdsoftcode.net)		  ##
+--   ##     Unified lua code for Classic, Classic-BFA, and Retail Shadowlands  ##
 
 -------------------------- DEFINE USER'S SLASH COMMANDS ------------------------
 
@@ -32,7 +32,7 @@ SLASH_G910TRIGGER1     = "/G910trigger"		-- just for testing
 
 -------------------------- ADD-ON GLOBALS ------------------------
 
-G910xmit = {}							-- namespace for all addon functions.
+G910xmit = {}							--  namespace for all addon functions.
 
 G910inCalibrationMode = 0				--  flag to suspend event processing (and update user message)
 G910calCountdown = 0
@@ -78,7 +78,7 @@ G910colorToTexture = {	R = "01",		-- used by putMsgOnPixels (new in 2.5)
 						M = "05",
 						C = "06" }
 G910texturePath = "Interface\\AddOns\\G910xmit\\"
-G910WoWClassic = select(4, GetBuildInfo()) < 20000
+G910WoWClassic = false					--  flag set during onLoad()
 --G910SuppressCooldowns 				--  saved variable in the .toc (applies across all characters on the same realm)
 --G910UserTimeFactor = 15				--  saved variable in the .toc
 --G910ProfileMemory{}					--  saved variable in the .toc
@@ -255,6 +255,7 @@ end
 
 function G910xmit:OnLoad()
 	--print("G910xmit_OnLoad()")
+	G910WoWClassic = select(4, GetBuildInfo()) < 30000
 	--while FrameUtil.registerFrameForEvents(self, {event}) is an option, it's no faster
 	local f = G910xmitFrame						-- defined by the XML
 	f:RegisterEvent("PLAYER_ENTERING_WORLD")	-- environment ready
@@ -296,14 +297,14 @@ function G910xmit:OnLoad()
 		f:RegisterEvent("AZERITE_ESSENCE_FORGE_OPEN")			--new for WoW 8.2
 		f:RegisterEvent("AZERITE_ESSENCE_CHANGED")				--new for WoW 8.2
 
-		f:RegisterEvent("ZONE_CHANGED_NEW_AREA")					-- check to see if we're in In Between
-		f:RegisterEvent("COVENANT_SANCTUM_INTERACTION_STARTED")		-- opening "Sanctum Upgrades" vendor/window. (transit network, anima conductor, adventures, custom). Uses 5 currencies
-		f:RegisterEvent("COVENANT_SANCTUM_INTERACTION_ENDED")		-- closing "sanctum Upgrades" vendor/window. fires 2x each time.
-		f:RegisterEvent("SOULBIND_FORGE_INTERACTION_STARTED") -- fired when first opened Forge of Bonds to pick 1 of 3 ppl & talents
-		f:RegisterEvent("SOULBIND_FORGE_INTERACTION_ENDED")  -- Forge of Binding window closed.
-		f:RegisterEvent("RUNEFORGE_LEGENDARY_CRAFTING_OPENED")		-- when opening the Runeforging window by the giant chained guy
-		f:RegisterEvent("RUNEFORGE_LEGENDARY_CRAFTING_CLOSED")		-- when closing the Runeforging window by the giant chained guy
-		f:RegisterEvent("CURRENCY_DISPLAY_UPDATE")					-- fires when logging in and changing zones
+		f:RegisterEvent("ZONE_CHANGED_NEW_AREA")				-- check to see if we're in In Between
+		f:RegisterEvent("COVENANT_SANCTUM_INTERACTION_STARTED")	-- opening "Sanctum Upgrades" vendor/window. (transit network, anima conductor, adventures, custom). Uses 5 currencies
+		f:RegisterEvent("COVENANT_SANCTUM_INTERACTION_ENDED")	-- closing "sanctum Upgrades" vendor/window. fires 2x each time.
+		f:RegisterEvent("SOULBIND_FORGE_INTERACTION_STARTED")	-- fired when first opened Forge of Bonds to pick 1 of 3 ppl & talents
+		f:RegisterEvent("SOULBIND_FORGE_INTERACTION_ENDED") 	-- Forge of Binding window closed.
+		f:RegisterEvent("RUNEFORGE_LEGENDARY_CRAFTING_OPENED")	-- when opening the Runeforging window by the giant chained guy
+		f:RegisterEvent("RUNEFORGE_LEGENDARY_CRAFTING_CLOSED")	-- when closing the Runeforging window by the giant chained guy
+		f:RegisterEvent("CURRENCY_DISPLAY_UPDATE")				-- fires when logging in and changing zones
 	end
 
 	G910XmitPhase = 0					-- status of the toggling guard textures
