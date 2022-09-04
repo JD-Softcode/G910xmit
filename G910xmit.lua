@@ -1,5 +1,5 @@
-﻿--   ## WoW G910 XMIT - ©2016-21 J∆•Softcode (www.jdsoftcode.net)		  ##
---   ##     Unified lua code for Classic, Classic-BFA, and Retail Shadowlands  ##
+﻿--   ## WoW G910 XMIT - ©2016-22 J∆•Softcode (www.jdsoftcode.net)		  ##
+--   ##     Unified lua code for Classic, Classic-WOTLK, and Retail Shadowlands  ##
 
 -------------------------- DEFINE USER'S SLASH COMMANDS ------------------------
 
@@ -255,7 +255,7 @@ end
 
 function G910xmit:OnLoad()
 	--print("G910xmit_OnLoad()")
-	G910WoWClassic = select(4, GetBuildInfo()) < 30000
+	G910WoWClassic = select(4, GetBuildInfo()) < 40000
 	--while FrameUtil.registerFrameForEvents(self, {event}) is an option, it's no faster
 	local f = G910xmitFrame						-- defined by the XML
 	f:RegisterEvent("PLAYER_ENTERING_WORLD")	-- environment ready
